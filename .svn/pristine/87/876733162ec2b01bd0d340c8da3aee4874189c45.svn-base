@@ -1,0 +1,302 @@
+package demo.cn.chartdemo.chart;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.PointF;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.text.TextPaint;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.VelocityTracker;
+import android.widget.Toast;
+
+import demo.cn.chartdemo.Utils.MathHelper;
+import demo.cn.chartdemo.view.PieChartView;
+
+/**
+ * Author  wangchenchen
+ * CreateDate 2016/1/14.
+ * Email wcc@jusfoun.com
+ * Description
+ */
+public class PieChart {
+    private PieChartView pieChartView;
+    private Paint paint;
+    private Point mCentre;
+    private int radius;
+    private Context context;
+    private RectF maxArc, minArc;
+    private RectF maxSelectArc, minSelectArc;
+    private int clickCount = -1, lastCount = -1;
+    private float[] angels;
+    private int[] colors;
+    private TextPaint textPaint;
+
+    public PieChart(Point point, Context context) {
+        paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(Color.CYAN);
+
+        this.context = context;
+        mCentre = point;
+        radius = Math.min(mCentre.x, mCentre.y);
+        maxArc = new RectF();
+        minArc = new RectF();
+        maxSelectArc = new RectF();
+        minSelectArc = new RectF();
+
+        angels = new float[3];
+        angels[0] = 0;
+        angels[1] = 120;
+        angels[2] = 240;
+
+        colors = new int[3];
+        colors[0] = Color.RED;
+        colors[1] = Color.CYAN;
+        colors[2] = Color.YELLOW;
+
+        maxArc.set(mCentre.x - 0.6f * radius, mCentre.y - 0.6f * radius
+                , mCentre.x + 0.6f * radius, mCentre.y + 0.6f * radius);
+        minArc.set(mCentre.x - 0.4f * radius, mCentre.y - 0.4f * radius
+                , mCentre.x + 0.4f * radius, mCentre.y + 0.4f * radius);
+        maxSelectArc.set(mCentre.x - 0.7f * radius, mCentre.y - 0.7f * radius
+                , mCentre.x + 0.7f * radius, mCentre.y + 0.7f * radius);
+        minSelectArc.set(mCentre.x - 0.45f * radius, mCentre.y - 0.45f * radius
+                , mCentre.x + 0.45f * radius, mCentre.y + 0.45f * radius);
+        count = 0.05f * radius;
+
+        textPaint = new TextPaint();
+        textPaint.setColor(Color.BLACK);
+        textPaint.setTextSize(25);
+        textPaint.setAntiAlias(true);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+    }
+
+    public void setPieChartView(PieChartView pieChartView) {
+        this.pieChartView = pieChartView;
+    }
+
+    private float count;
+    private float clickAngel = 0f;
+    private float countAngel = 0f;
+
+    private float outCount = 0f;
+    private float rectCount = 0f;
+
+    public void onDraw(Canvas canvas) {
+        canvas.save();
+        canvas.drawColor(Color.WHITE);
+
+        if (rectCount <= (0.7 * radius)) {
+            paint.setColor(Color.BLUE);
+            canvas.drawRoundRect(maxArc, rectCount, rectCount, paint);
+            rectCount += 1f;
+        } else if (animCount <= 360) {
+
+            paint.setColor(Color.BLUE);
+            canvas.drawRoundRect(maxArc, rectCount, rectCount, paint);
+            startAnim(canvas);
+        } else {
+
+            if (clickCount != -1 && lastCount != clickCount && outCount <= count) {
+
+                minSelectArc.set(mCentre.x - 0.4f * radius - outCount, mCentre.y - 0.4f * radius - outCount
+                        , mCentre.x + 0.4f * radius + outCount, mCentre.y + 0.4f * radius + outCount);
+                maxSelectArc.set(mCentre.x - 0.6f * radius - outCount, mCentre.y - 0.6f * radius - outCount
+                        , mCentre.x + 0.6f * radius + outCount, mCentre.y + 0.6f * radius + outCount);
+
+                paint.setColor(colors[clickCount]);
+                canvas.drawArc(maxSelectArc, angels[clickCount] + moveAngel, 120, true, paint);
+                PointF pointF = MathHelper.getInstanse().getPoint(angels[clickCount] + moveAngel + countAngel + 60, 0.5f * radius + outCount, mCentre);
+                canvas.drawText("30%\n第" + clickCount + "个", pointF.x, pointF.y, textPaint);
+
+                paint.setColor(Color.GRAY);
+                canvas.drawArc(maxArc, angels[clickCount] + moveAngel + 120, 240, true, paint);
+                paint.setColor(Color.WHITE);
+                canvas.drawArc(minArc, angels[clickCount] + moveAngel + 120, 240, true, paint);
+                PointF pointF1 = MathHelper.getInstanse().getPoint(angels[clickCount] + moveAngel + countAngel + 240, 0.5f * radius, mCentre);
+                canvas.drawText("70%未选中", pointF1.x, pointF1.y, textPaint);
+                paint.setColor(Color.WHITE);
+                outCount += 1f;
+            } else {
+
+                if (clickCount != -1 && countAngel < clickAngel) {
+
+                    if (countAngel < clickAngel) {
+
+                        paint.setColor(colors[clickCount]);
+                        canvas.drawArc(maxSelectArc, angels[clickCount] + moveAngel + countAngel, 120, true, paint);
+                        PointF pointF = MathHelper.getInstanse().getPoint(angels[clickCount] + moveAngel + countAngel + 60, 0.6f * radius, mCentre);
+                        canvas.drawText("30%\n第" + clickCount + "个", pointF.x, pointF.y, textPaint);
+
+                        paint.setColor(Color.GRAY);
+                        canvas.drawArc(maxArc, angels[clickCount] + moveAngel + countAngel + 120, 240, true, paint);
+                        paint.setColor(Color.WHITE);
+                        canvas.drawArc(minArc, angels[clickCount] + moveAngel + countAngel + 120, 240, true, paint);
+                        PointF pointF1 = MathHelper.getInstanse().getPoint(angels[clickCount] + moveAngel + countAngel + 240, 0.5f * radius, mCentre);
+                        canvas.drawText("70%未选中", pointF1.x, pointF1.y, textPaint);
+
+                    } else {
+
+                        for (int i = 0; i < angels.length; i++) {
+                            paint.setColor(colors[i]);
+                            canvas.drawArc(maxArc, angels[i] + moveAngel + countAngel, 120, true, paint);
+                            paint.setColor(Color.WHITE);
+                            canvas.drawArc(minArc, angels[i] + moveAngel + countAngel, 120, true, paint);
+                            PointF pointF = MathHelper.getInstanse().getPoint(angels[i] + moveAngel + countAngel + 60, 0.5f * radius, mCentre);
+                            canvas.drawText("30%\n第" + i + "个", pointF.x, pointF.y, textPaint);
+                        }
+                    }
+                    paint.setColor(Color.WHITE);
+                    countAngel += 1f;
+                } else {
+
+                    moveAngel += clickAngel;
+                    countAngel = 0;
+                    clickAngel = 0;
+                    if (clickCount != -1) {
+
+                        paint.setColor(colors[clickCount]);
+                        canvas.drawArc(maxSelectArc, angels[clickCount] + moveAngel, 120, true, paint);
+                        PointF pointF = MathHelper.getInstanse().getPoint(angels[clickCount] + moveAngel + countAngel + 60, 0.6f * radius, mCentre);
+                        canvas.drawText("30%\n第" + clickCount + "个", pointF.x, pointF.y, textPaint);
+
+                        paint.setColor(Color.GRAY);
+                        canvas.drawArc(maxArc, angels[clickCount] + moveAngel + 120, 240, true, paint);
+                        paint.setColor(Color.WHITE);
+                        canvas.drawArc(minArc, angels[clickCount] + moveAngel + 120, 240, true, paint);
+                        PointF pointF1 = MathHelper.getInstanse().getPoint(angels[clickCount] + moveAngel + countAngel + 240, 0.5f * radius, mCentre);
+                        canvas.drawText("70%未选中", pointF1.x, pointF1.y, textPaint);
+                    } else {
+
+                        for (int i = 0; i < angels.length; i++) {
+                            paint.setColor(colors[i]);
+                            canvas.drawArc(maxArc, angels[i] + moveAngel, 120, true, paint);
+                            paint.setColor(Color.WHITE);
+                            canvas.drawArc(minArc, angels[i] + moveAngel, 120, true, paint);
+                            PointF pointF = MathHelper.getInstanse().getPoint(angels[i] + moveAngel + countAngel + 60, 0.5f * radius, mCentre);
+                            canvas.drawText("30%\n第" + i + "个", pointF.x, pointF.y, textPaint);
+                        }
+                    }
+                }
+            }
+        }
+        paint.setColor(Color.WHITE);
+        canvas.drawCircle(mCentre.x, mCentre.y, 0.4f * radius, paint);
+        if (clickCount >= 0 && clickCount < angels.length)
+            canvas.drawArc(minSelectArc, angels[clickCount] + moveAngel + countAngel, 120, true, paint);
+        canvas.restore();
+    }
+
+
+    private int animCount = 0;
+
+    private void startAnim(Canvas canvas) {
+
+        int curcentCount = 0;
+        if (animCount <= 360) {
+            for (int i = 0; i < angels.length; i++) {
+                if (i == 0) {
+                    if (animCount < angels[i] + 120)
+                        curcentCount = 0;
+                } else {
+                    if (animCount <= angels[i] + 120 && animCount > angels[i])
+                        curcentCount = i;
+                }
+            }
+        }
+        for (int i = 0; i < curcentCount + 1; i++) {
+            if (i == curcentCount) {
+                paint.setColor(colors[i]);
+                canvas.drawArc(maxArc, angels[i], animCount - angels[curcentCount], true, paint);
+                if (animCount > angels[i] + 60) {
+                    PointF pointF = MathHelper.getInstanse().getPoint(angels[i] + 60, 0.5f * radius, mCentre);
+                    canvas.drawText("30%\n第" + i + "个", pointF.x, pointF.y, textPaint);
+                }
+
+            } else {
+                paint.setColor(colors[i]);
+                canvas.drawArc(maxArc, angels[i], 120, true, paint);
+                PointF pointF = MathHelper.getInstanse().getPoint(angels[i] + 60, 0.5f * radius, mCentre);
+                canvas.drawText("30%\n第" + i + "个", pointF.x, pointF.y, textPaint);
+            }
+        }
+        animCount += 3;
+    }
+
+    private boolean isMove = false;
+    private Point lastDown = new Point();
+    private Point moveDown = new Point();
+    private float moveAngel = 0;
+
+    public void onTouchEvent(MotionEvent event) {
+
+
+        switch (event.getAction()) {
+
+            case MotionEvent.ACTION_DOWN:
+                isMove = false;
+                countAngel = 0;
+                clickAngel = 0;
+                lastDown.x = (int) event.getX();
+                lastDown.y = (int) event.getY();
+                moveDown.x = (int) event.getX();
+                moveDown.y = (int) event.getY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                moveDown.x = (int) event.getX();
+                moveDown.y = (int) event.getY();
+                if (Math.sqrt(Math.pow(moveDown.x - lastDown.x, 2) + Math.pow(moveDown.y - lastDown.y, 2)) > 10) {
+                    float fromAngel = MathHelper.getInstanse().getAngel(lastDown.x, lastDown.y, mCentre);
+                    float toAngel = MathHelper.getInstanse().getAngel(moveDown.x, moveDown.y, mCentre);
+                    moveAngel += (toAngel - fromAngel);
+                    if (moveAngel > 360)
+                        moveAngel -= 360;
+                    if (moveAngel < -360)
+                        moveAngel += 360;
+                    isMove = true;
+                    lastDown.x = moveDown.x;
+                    lastDown.y = moveDown.y;
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+
+                if (isMove)
+                    return;
+                if (MathHelper.getInstanse().isInPie(0.6f * radius, event.getX(), event.getY(), mCentre)) {
+                    Log.e("moveangel", moveAngel + "");
+                    lastCount = clickCount;
+                    if (MathHelper.getInstanse().isAngelArc(0.6f * radius, 0.4f * radius, event.getX()
+                            , event.getY(), mCentre, 0 + moveAngel, 120 + moveAngel)) {
+                        clickCount = 0;
+                        Toast.makeText(context, "红色圆弧内", Toast.LENGTH_SHORT).show();
+                    } else if (MathHelper.getInstanse().isAngelArc(0.6f * radius, 0.4f * radius, event.getX()
+                            , event.getY(), mCentre, 120 + moveAngel, 240 + moveAngel)) {
+                        clickCount = 1;
+                        Toast.makeText(context, "青色圆弧内", Toast.LENGTH_SHORT).show();
+                    } else if (MathHelper.getInstanse().isAngelArc(0.6f * radius, 0.4f * radius, event.getX()
+                            , event.getY(), mCentre, 240 + moveAngel, 360 + moveAngel)) {
+                        clickCount = 2;
+                        Toast.makeText(context, "黄色圆弧内", Toast.LENGTH_SHORT).show();
+                    } else {
+                        clickCount = -1;
+                        Toast.makeText(context, "圆内", Toast.LENGTH_SHORT).show();
+                    }
+                    if (clickCount != -1) {
+                        clickAngel = MathHelper.getInstanse().getAngel(event.getX(), event.getY(), mCentre);
+                        outCount = 0f;
+                        if (clickAngel > 90)
+                            clickAngel = 450 - clickAngel;
+                        else
+                            clickAngel = 90 - clickAngel;
+                    }
+                }
+        }
+    }
+}

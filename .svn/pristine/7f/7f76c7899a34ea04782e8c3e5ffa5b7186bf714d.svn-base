@@ -1,0 +1,144 @@
+package demo.cn.chartdemo.view;
+
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Point;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.View;
+
+import demo.cn.chartdemo.chart.PieChart;
+
+/**
+ * Author  wangchenchen
+ * CreateDate 2016/1/14.
+ * Email wcc@jusfoun.com
+ * Description
+ */
+public class PieChartView extends SurfaceView implements SurfaceHolder.Callback {
+    private PieChart pieChart;
+    private SurfaceHolder surfaceHolder;
+    private Context context;
+    private PieThread pieThread;
+
+    public PieChartView(Context context) {
+        super(context);
+        initView(context);
+    }
+
+    public PieChartView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initView(context);
+    }
+
+    public PieChartView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        initView(context);
+    }
+
+    private void initView(Context context) {
+        surfaceHolder = getHolder();
+        surfaceHolder.addCallback(this);
+        this.context = context;
+        pieThread = new PieThread();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (pieThread!=null){
+            pieThread.setThreadStop();
+            pieThread.interrupt();
+            pieThread=null;
+        }
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        pieChart = new PieChart(new Point(width / 2, height / 2), context);
+        pieChart.setPieChartView(this);
+        if (pieThread!=null) {
+            if (pieThread.getState() == Thread.State.NEW) {
+                pieThread.start();
+            } else if (pieThread.getState()!= Thread.State.TERMINATED){
+                pieThread.resumeThread();
+            }
+        }
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        pieThread.setThreadPause();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        pieChart.onTouchEvent(event);
+        return true;
+    }
+
+    public void resumeThread(){
+        pieThread.resumeThread();
+    }
+
+    public void setThreadPause(){
+        pieThread.setThreadPause();
+    }
+
+    class PieThread extends Thread {
+
+        private boolean threadPause = false;
+        private boolean threadStop = false;
+        private Canvas canvas;
+
+        public void setThreadPause() {
+            synchronized (this) {
+                threadPause = true;
+            }
+        }
+
+        public void setThreadStop() {
+            synchronized (this) {
+                threadStop = true;
+            }
+        }
+
+        public void resumeThread() {
+            synchronized (this) {
+                threadPause = false;
+                notify();
+            }
+        }
+
+        @Override
+        public void run() {
+            while (!threadStop) {
+                try {
+                    if (!threadPause) {
+                        synchronized (surfaceHolder) {
+                            canvas = surfaceHolder.lockCanvas();
+                            pieChart.onDraw(canvas);
+                            surfaceHolder.unlockCanvasAndPost(canvas);
+                        }
+//                        Thread.sleep(20);
+//                        threadPause=true;
+                    } else {
+                        synchronized (this) {
+                            wait();
+                        }
+                    }
+                } catch (InterruptedException e) {
+
+                }
+            }
+        }
+    }
+
+}

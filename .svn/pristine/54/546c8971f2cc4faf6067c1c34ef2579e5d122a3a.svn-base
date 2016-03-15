@@ -1,0 +1,438 @@
+package demo.cn.chartdemo.view;
+
+import android.animation.ValueAnimator;
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Point;
+import android.graphics.PointF;
+import android.graphics.RectF;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.View;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import demo.cn.chartdemo.Utils.MathHelper;
+import demo.cn.chartdemo.data.LineChartData;
+
+/**
+ * Author  wangchenchen
+ * CreateDate 2016/1/27.
+ * Email wcc@jusfoun.com
+ * Description 折线图
+ */
+public class LineChartView extends View {
+
+    private int[] values, years;
+    private List<String> xAxis, yAxis;
+    private int width, height;
+    private float chartW, chartH;
+    private Point zero;
+    private List<PointF> points;
+    private int titleNum;
+    private int count;
+    private float startY;
+    private List<RectF> rects;
+    private LineChartData lineChartData;
+    private boolean isCanScale = false;
+    private int distance;
+    private int total;
+    private RectF rect;
+    private float totalLength;
+
+    public LineChartView(Context context) {
+        super(context);
+        initViews();
+    }
+
+    public LineChartView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initViews();
+    }
+
+    public LineChartView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        initViews();
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        canvas.drawColor(Color.WHITE);
+        //画y轴
+        canvas.drawLine(zero.x, zero.y, zero.x, zero.y + chartH, lineChartData.getDotPaint());
+        //画x轴
+        canvas.drawLine(zero.x, zero.y + chartH, zero.x + total * distance + mTranslate[0], zero.y + chartH, lineChartData.getDotPaint());
+        drawXYAxis(canvas);
+        if (count <= titleNum) {
+            animOne(canvas);
+        }
+//        if (count <= chartW) {
+//            animTwo(canvas);
+//        }
+        else {
+            if (selectCount == -1) {
+
+                for (int i = 0; i < points.size(); i++) {
+                    if (i > 0) {
+                        float x = points.get(i - 1).x;
+                        if (x >= zero.x) {
+                            canvas.drawLine(x, points.get(i - 1).y, points.get(i).x, points.get(i).y, lineChartData.getDotPaint());
+                        } else if (points.get(i).x >= zero.x) {
+                            float y = MathHelper.getInstanse().getPointF(points.get(i - 1).x
+                                    , points.get(i - 1).y, points.get(i).x, points.get(i).y, points.get(i).x - zero.x);
+                            y = points.get(i).y - y;
+                            canvas.drawLine(zero.x, y, points.get(i).x, points.get(i).y, lineChartData.getDotPaint());
+                        }
+                    }
+                    if (points.get(i).x >= zero.x)
+                        canvas.drawCircle(points.get(i).x, points.get(i).y, 5, lineChartData.getDotPaint());
+                }
+
+//                if (isDrawLine && movePoint.x >= zero.x && movePoint.x <= points.get(points.size() - 1).x) {
+//                    canvas.drawLine(movePoint.x, zero.y, movePoint.x, zero.y + chartH, lineChartData.getDotPaint());
+//                }
+
+
+            } else {
+                for (int i = 0; i < points.size(); i++) {
+                    if (i > 0) {
+                        float x = points.get(i - 1).x;
+                        if (x >= zero.x) {
+                            canvas.drawLine(x, points.get(i - 1).y, points.get(i).x, points.get(i).y, lineChartData.getGrayLinePaint());
+                        } else if (points.get(i).x >= zero.x) {
+                            float y = MathHelper.getInstanse().getPointF(points.get(i - 1).x
+                                    , points.get(i - 1).y, points.get(i).x, points.get(i).y, points.get(i).x - zero.x);
+                            y = points.get(i).y - y;
+                            canvas.drawLine(zero.x, y, points.get(i).x, points.get(i).y, lineChartData.getGrayLinePaint());
+                        }
+                    }
+                    if (i != selectCount && points.get(i).x >= zero.x)
+                        canvas.drawCircle(points.get(i).x, points.get(i).y, 5, lineChartData.getGrayLinePaint());
+                }
+                if (points.get(selectCount).x >= zero.x) {
+                    canvas.drawCircle(points.get(selectCount).x, points.get(selectCount).y, 20, lineChartData.getDotPaint());
+                    canvas.drawLine(points.get(selectCount).x, zero.y, points.get(selectCount).x, zero.y + chartH, lineChartData.getDotPaint());
+                }
+            }
+        }
+
+
+    }
+
+    /**
+     * 绘制坐标系
+     *
+     * @param canvas
+     */
+    private void drawXYAxis(Canvas canvas) {
+        for (int i = 0; i < total; i++) {
+            if (points.get(i).x >= zero.x) {
+                canvas.save();
+                if (selectCount != -1) {
+                    if (selectCount == i)
+                        lineChartData.setxAxisPaintColor(Color.RED);
+                    else
+                        lineChartData.setxAxisPaintColor(Color.GRAY);
+                } else
+                    lineChartData.setxAxisPaintColor(Color.RED);
+                canvas.rotate(60, zero.x + distance * i + mTranslate[0], zero.y + chartH + 20);
+                canvas.drawText(lineChartData.getxAxis().get(i), zero.x + distance * i + mTranslate[0], zero.y + chartH + 20, lineChartData.getxAxisPaint());
+                canvas.restore();
+                canvas.drawLine(zero.x + distance * i + mTranslate[0], zero.y + chartH, zero.x + distance * i + mTranslate[0], zero.y + chartH - 20, lineChartData.getDotPaint());
+            }
+        }
+        canvas.save();
+        for (int i = 0; i < lineChartData.getyAxis().size(); i++) {
+            canvas.drawLine(zero.x, zero.y + chartH * i / 10, zero.x + chartW, zero.y + chartH * i / 10, lineChartData.getLinePaint());
+            canvas.drawText(lineChartData.getyAxis().get(i), zero.x - 20, zero.y + chartH * (10 - i) / 10, lineChartData.getyAxisPaint());
+        }
+        canvas.restore();
+    }
+
+    private void animOne(Canvas canvas) {
+        for (int i = 0; i < points.size(); i++) {
+            float y = points.get(i).y;
+            if (y > startY) {
+                y = y - (startY + count) >= 0 ? (startY + count) : y;
+            } else {
+                y = startY - count - y >= 0 ? startY - count : y;
+            }
+            if (i > 0) {
+                float y1 = points.get(i - 1).y;
+                if (y1 > startY) {
+                    y1 = y1 - (startY + count) >= 0 ? (startY + count) : y1;
+                } else {
+                    y1 = startY - count - y1 >= 0 ? startY - count : y1;
+                }
+                canvas.drawLine(points.get(i - 1).x, y1, points.get(i).x, y, lineChartData.getDotPaint());
+            }
+            canvas.drawCircle(points.get(i).x, y, 5, lineChartData.getDotPaint());
+        }
+        count += 20;
+        postInvalidate();
+    }
+
+    private int index = 0;
+
+    private void animTwo(Canvas canvas) {
+        for (int i = 0; i < points.size(); i++) {
+            if (i > 0 && index > 0 && i < index) {
+                canvas.drawLine(points.get(i - 1).x, points.get(i - 1).y, points.get(i).x, points.get(i).y, lineChartData.getDotPaint());
+            }
+            if (i > 0 && count > points.get(i - 1).x && count <= points.get(i).x) {
+                float y = (count - points.get(i - 1).x)
+                        / (points.get(i).x - points.get(i - 1).x)
+                        * (points.get(i).y - points.get(i - 1).y)
+                        + points.get(i - 1).y;
+
+                canvas.drawLine(points.get(i - 1).x, points.get(i - 1).y
+                        , count, y, lineChartData.getDotPaint());
+                index = i;
+            }
+            if (i < index)
+                canvas.drawCircle(points.get(i).x, points.get(i).y, 5, lineChartData.getDotPaint());
+        }
+
+        count += 10;
+        postInvalidate();
+    }
+
+
+    private void initViews() {
+        total = 20;
+        zero = new Point();
+        points = new ArrayList<>();
+        values = new int[total];
+        years = new int[total];
+        xAxis = new ArrayList<>();
+        yAxis = new ArrayList<>();
+
+        rect = new RectF();
+
+        lineChartData = new LineChartData();
+        Random random = new Random();
+        for (int i = 0; i < total; i++) {
+            values[i] = random.nextInt(10);
+            years[i] = 2006 + i;
+            xAxis.add(years[i] + "");
+            yAxis.add(i + "");
+            int index = values[i] - 1;
+            titleNum = Math.max(titleNum, Math.abs(index));
+        }
+        lineChartData.setxAxis(xAxis);
+        lineChartData.setyAxis(yAxis);
+        rects = new ArrayList<>();
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        width = w;
+        height = h;
+        zero.x = w / 10;
+        zero.y = h / 10;
+        chartW = w * 8 / 10;
+        chartH = h * 8 / 10;
+        distance = (int) (chartW / 10);
+        titleNum *= h / 10;
+        startY = zero.y + chartH * 9 / 10;
+        rect.set(zero.x, zero.y, w, zero.y + chartH);
+        totalLength = distance * total;
+        for (int i = 0; i < total; i++) {
+            PointF point = new PointF();
+            point.x = zero.x + distance * i;
+            point.y = zero.y + chartH * (10 - values[i]) / 10;
+            points.add(point);
+            RectF rectf = new RectF(point.x - 50, point.y - 50, point.x + 50, point.y + 50);
+            rects.add(rectf);
+        }
+    }
+
+    private boolean isMove = false;
+    private PointF movePoint = new PointF();
+    private int selectCount = -1;
+    private Point lastDown = new Point();
+    private Point nowDown = new Point();
+    private int mTranslate[] = new int[]{0, 0};
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                isMove = false;
+                lastDown.x = (int) event.getX();
+                lastDown.y = (int) event.getY();
+                nowDown.x = (int) event.getX();
+                nowDown.y = (int) event.getY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                int x = (int) event.getX();
+                int y = (int) event.getY();
+                if (Math.sqrt((x - lastDown.x) * (x - lastDown.x) + (y - lastDown.y) * (y - lastDown.y)) > 10) {
+                    isMove = true;
+                    movePoint.x = event.getX();
+                    movePoint.y = event.getY();
+                    if (x - nowDown.x > 0) {
+                        if (mTranslate[0] + x - nowDown.x > 0) {
+                            for (int i = 0; i < total; i++) {
+                                PointF point = points.get(i);
+                                point.x -= mTranslate[0];
+//                        point.y+=y-nowDown.y;
+                            }
+                            mTranslate[0] = 0;
+                            nowDown.x=x;
+                            postInvalidate();
+                            return true;
+                        }
+                    } else if (x - nowDown.x < 0) {
+                        if (totalLength>chartW+distance) {
+                            if (mTranslate[0] + x - nowDown.x < chartW + distance - totalLength) {
+
+                                for (int i = 0; i < total; i++) {
+                                    PointF point = points.get(i);
+                                    point.x -= mTranslate[0] - chartW - distance + totalLength;
+//                        point.y+=y-nowDown.y;
+                                }
+                                mTranslate[0] = (int) (chartW + distance - totalLength);
+                                nowDown.x=x;
+                                postInvalidate();
+                                return true;
+                            }
+                        }
+                    }
+                    mTranslate[0] += x - nowDown.x;
+                    mTranslate[1] += y - nowDown.y;
+                    for (int i = 0; i < total; i++) {
+                        PointF point = points.get(i);
+                        point.x += x - nowDown.x;
+//                        point.y+=y-nowDown.y;
+                    }
+                    nowDown.x = x;
+                    nowDown.y = y;
+                    postInvalidate();
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                if (!isMove) {
+                    //点击监听
+                    boolean isSelect = false;
+                    for (int i = 0; i < points.size(); i++) {
+                        if (Math.abs(points.get(i).x - event.getX()) <= 50
+                                && event.getY() <= zero.y + chartH
+                                && event.getY() >= zero.y) {
+                            if (selectCount == i) {
+                                selectCount = -1;
+                                isSelect = false;
+                            } else {
+                                selectCount = i;
+                                isSelect = true;
+                            }
+                            break;
+                        }
+                    }
+                    if (!isSelect)
+                        selectCount = -1;
+                    if (listener != null)
+                        listener.onClick(selectCount);
+                    postInvalidate();
+                }
+                break;
+        }
+        return true;
+    }
+
+    private void twoPointEvent(MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_POINTER_DOWN:
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                break;
+            case MotionEvent.ACTION_MOVE:
+                break;
+        }
+    }
+
+    public int getSelectCount() {
+        return selectCount;
+    }
+
+    /**
+     *选中后移动到上一个点或者下一个点
+     * @param count 上一个点或下一个点
+     */
+    public void step(int count) {
+        if (selectCount != -1) {
+            if ((selectCount+count) != points.size() &&(selectCount+count)!=-1) {
+                selectCount += count;
+                if (points.get(selectCount).x > width) {
+                    int index= (int) (width - points.get(selectCount).x-width/2);
+                    if (mTranslate[0]+index<chartW + distance - totalLength)
+                        index= (int) (chartW + distance - totalLength)-mTranslate[0];
+                    startTranslationAnim(index);
+                }else if (points.get(selectCount).x < zero.x){
+                    int index= (int) (zero.x - points.get(selectCount).x+width/2);
+                    if (mTranslate[0]+index>0)
+                        index=-mTranslate[0];
+                    startTranslationAnim(index);
+                }else {
+                    postInvalidate();
+                }
+            }
+        }
+    }
+
+    private int lastIndex = 0;
+
+    /**
+     * 点在屏幕外时，做动画将点移动到屏幕内
+     * @param translation 移动距离
+     */
+    public void startTranslationAnim(int translation) {
+
+        lastIndex = 0;
+        ValueAnimator animator = ValueAnimator.ofInt(0, translation);
+        animator.setDuration(1000);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                Integer index = (Integer) animation.getAnimatedValue();
+                mTranslate[0] += index - lastIndex;
+                for (int i = 0; i < total; i++) {
+                    points.get(i).x += index - lastIndex;
+                }
+                lastIndex = index;
+                postInvalidate();
+            }
+        });
+        animator.start();
+
+    }
+
+    /**
+     * 重置折线图
+     */
+    public void reset() {
+        selectCount = -1;
+        count=0;
+        postInvalidate();
+    }
+
+    public void setIsCanScale(boolean isCanScale) {
+        this.isCanScale = isCanScale;
+    }
+
+    public static interface onClickDotListener {
+        public void onClick(int count);
+    }
+
+    private onClickDotListener listener;
+
+    public void setListener(onClickDotListener listener) {
+        this.listener = listener;
+    }
+}

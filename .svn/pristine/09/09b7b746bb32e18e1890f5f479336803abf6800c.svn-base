@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <demo.cn.chartdemo.view.LineChartView
+        android:id="@+id/chat_line"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        />
+
+    <demo.cn.chartdemo.view.ColumnChartView
+        android:id="@+id/columnchart"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <demo.cn.chartdemo.view.PieChartView
+        android:id="@+id/piechart"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/btn_line"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="折线图"
+            android:layout_weight="1"/>
+        <Button
+            android:id="@+id/btn_pie"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="饼状图"
+            android:layout_weight="1"/>
+        <Button
+            android:id="@+id/btn_column"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="柱状图"
+            android:layout_weight="1"/>
+    </LinearLayout>
+
+    <demo.cn.chartdemo.view.PopupLayout
+        android:id="@+id/toast"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"/>
+
+</RelativeLayout>

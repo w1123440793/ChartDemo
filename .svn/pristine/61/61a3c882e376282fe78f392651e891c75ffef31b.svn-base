@@ -1,0 +1,115 @@
+package demo.cn.chartdemo.view;
+
+import android.content.Context;
+import android.util.AttributeSet;
+import android.util.DisplayMetrics;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import demo.cn.chartdemo.R;
+
+/**
+ * Author  wangchenchen
+ * CreateDate 2016/1/22.
+ * Email wcc@jusfoun.com
+ * Description 弹出操作框
+ */
+public class PopupLayout extends LinearLayout {
+    private Context context;
+    private ImageView left, right;
+    private TextView content;
+    private LinearLayout layout;
+    private float lastx, lasty;
+    private int screenWidth;
+    private int screenHeight;
+
+    public PopupLayout(Context context) {
+        super(context);
+        initViews(context);
+    }
+
+    public PopupLayout(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initViews(context);
+    }
+
+    public PopupLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        initViews(context);
+    }
+
+    private void initViews(Context context) {
+        this.context = context;
+        View view = LayoutInflater.from(context).inflate(R.layout.layout_toast, this);
+        left = (ImageView) view.findViewById(R.id.left);
+        right = (ImageView) view.findViewById(R.id.right);
+        content= (TextView) view.findViewById(R.id.content);
+        layout = (LinearLayout) view.findViewById(R.id.layout);
+        DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        screenWidth = dm.widthPixels;
+        screenHeight = dm.heightPixels - 50;
+        layout.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        lastx = event.getRawX();
+                        lasty = event.getRawY();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+
+                        int dx = (int) (event.getRawX() - lastx);
+                        int dy = (int) (event.getRawY() - lasty);
+
+                        if (Math.sqrt(dx * dx + dy * dy) > 5) {
+
+                            int left = getLeft() + dx;
+                            int top = getTop() + dy;
+                            int right = getRight() + dx;
+                            int bottom = getBottom() + dy;
+                            if (left < 0) {
+                                left = 0;
+                                right = left + getWidth();
+                            }
+                            if (right > screenWidth) {
+                                right = screenWidth;
+                                left = right - getWidth();
+                            }
+                            if (top < 0) {
+                                top = 0;
+                                bottom = top + getHeight();
+                            }
+                            if (bottom > screenHeight) {
+                                bottom = screenHeight;
+                                top = bottom - getHeight();
+                            }
+                            layout(left, top, right, bottom);
+                            lastx = event.getRawX();
+                            lasty = event.getRawY();
+                        }
+
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        break;
+                }
+                return true;
+            }
+        });
+    }
+
+    public void setTxt(String txt){
+        content.setText(txt);
+    }
+
+    public void setLeftListener(OnClickListener listener) {
+        left.setOnClickListener(listener);
+    }
+
+    public void setRightListener(OnClickListener listener) {
+        right.setOnClickListener(listener);
+    }
+}

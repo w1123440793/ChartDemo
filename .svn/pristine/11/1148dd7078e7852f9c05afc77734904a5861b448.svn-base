@@ -1,0 +1,37 @@
+package demo.cn.chartdemo.activity;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+
+import demo.cn.chartdemo.R;
+import demo.cn.chartdemo.chart.PieChart;
+import demo.cn.chartdemo.view.PieChartView;
+import demo.cn.chartdemo.view.ToastLayout;
+
+public class MainActivity extends AppCompatActivity {
+
+    private PieChartView pieChart;
+    private ToastLayout toast;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        pieChart= (PieChartView) findViewById(R.id.piechart);
+        toast= (ToastLayout) findViewById(R.id.toast);
+
+        toast.setLeftListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pieChart.clickView(true);
+            }
+        });
+
+        toast.setRightListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pieChart.clickView(false);
+            }
+        });
+    }
+}

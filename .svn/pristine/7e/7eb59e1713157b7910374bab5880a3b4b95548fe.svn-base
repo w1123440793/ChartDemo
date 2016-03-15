@@ -1,0 +1,335 @@
+package demo.cn.chartdemo.view;
+
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.DashPathEffect;
+import android.graphics.Paint;
+import android.graphics.PathEffect;
+import android.graphics.Point;
+import android.graphics.PointF;
+import android.graphics.RectF;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import demo.cn.chartdemo.Utils.MathHelper;
+import demo.cn.chartdemo.data.LineChartData;
+
+/**
+ * Author  wangchenchen
+ * CreateDate 2016/1/27.
+ * Email wcc@jusfoun.com
+ * Description 折线图
+ */
+public class LineChartView extends View {
+
+    private int[] values, years;
+    private List<String> xAxis,yAxis;
+    private int width, height;
+    private float chartW, chartH;
+    private Point zero;
+    private List<PointF> points;
+    private int titleNum;
+    private int count;
+    private float startY;
+    private List<RectF> rects;
+    private LineChartData lineChartData;
+    private boolean isCanScale=false;
+    private int distance;
+    private int total;
+    public LineChartView(Context context) {
+        super(context);
+        initViews();
+    }
+
+    public LineChartView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initViews();
+    }
+
+    public LineChartView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        initViews();
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        canvas.drawColor(Color.WHITE);
+        canvas.drawLine(zero.x, zero.y, zero.x, zero.y + chartH, lineChartData.getDotPaint());
+        canvas.drawLine(zero.x, zero.y + chartH, zero.x + chartW, zero.y + chartH, lineChartData.getDotPaint());
+        for (int i = 0; i < total; i++) {//纵轴刻度及虚线
+            canvas.drawLine(zero.x, zero.y + chartH * i / 10, zero.x + chartW, zero.y + chartH * i / 10, lineChartData.getLinePaint());
+        }
+        for (int i = 0; i < total; i++) {//横轴刻度
+            canvas.drawLine(zero.x + distance*i, zero.y + chartH, zero.x + distance*i, zero.y + chartH - 20, lineChartData.getDotPaint());
+        }
+        if (count <=titleNum){
+            animOne(canvas);
+        }
+//        if (count <= chartW) {
+//            animTwo(canvas);
+//        }
+        else {
+            if (selectCount == -1) {
+
+                for (int i = 0; i < points.size(); i++) {
+                    if (i > 0) {
+                        canvas.drawLine(points.get(i - 1).x, points.get(i - 1).y, points.get(i).x, points.get(i).y, lineChartData.getDotPaint());
+                    }
+                    canvas.drawCircle(points.get(i).x, points.get(i).y, 5, lineChartData.getDotPaint());
+                }
+
+                if (isDrawLine && movePoint.x >= zero.x && movePoint.x <= points.get(points.size() - 1).x) {
+                    canvas.drawLine(movePoint.x, zero.y, movePoint.x, zero.y + chartH, lineChartData.getDotPaint());
+                }
+
+
+            }
+            else {
+                for (int i = 0; i < points.size(); i++) {
+                    if (i > 0) {
+                        canvas.drawLine(points.get(i - 1).x, points.get(i - 1).y, points.get(i).x, points.get(i).y, lineChartData.getGrayLinePaint());
+                    }
+                    if (i!=selectCount)
+                        canvas.drawCircle(points.get(i).x, points.get(i).y, 5, lineChartData.getGrayLinePaint());
+                }
+                canvas.drawCircle(points.get(selectCount).x, points.get(selectCount).y, 20, lineChartData.getDotPaint());
+                canvas.drawLine(points.get(selectCount).x, zero.y, points.get(selectCount).x, zero.y + chartH, lineChartData.getDotPaint());
+            }
+        }
+
+        drawXYAxis(canvas);
+    }
+
+    private void drawXYAxis(Canvas canvas){
+        for (int i = 0; i <lineChartData.getxAxis().size() ; i++) {
+            canvas.save();
+            if (selectCount!=-1){
+                if (selectCount==i)
+                    lineChartData.setxAxisPaintColor(Color.RED);
+                else
+                    lineChartData.setxAxisPaintColor(Color.GRAY);
+            }else
+                lineChartData.setxAxisPaintColor(Color.RED);
+            canvas.rotate(60,zero.x + distance*i, zero.y + chartH+20);
+            canvas.drawText(lineChartData.getxAxis().get(i), zero.x + distance*i, zero.y + chartH + 20, lineChartData.getxAxisPaint());
+            canvas.restore();
+        }
+        canvas.save();
+        for (int i = 0; i < lineChartData.getyAxis().size(); i++) {
+            canvas.drawText(lineChartData.getyAxis().get(i), zero.x-20, zero.y + chartH * (10-i) / 10, lineChartData.getyAxisPaint());
+        }
+        canvas.restore();
+    }
+
+    private void animOne(Canvas canvas) {
+        for (int i = 0; i < points.size(); i++) {
+            float y = points.get(i).y;
+            if (y > startY) {
+                y = y - (startY + count) >= 0 ? (startY + count) : y;
+            } else {
+                y = startY - count - y >= 0 ? startY - count : y;
+            }
+            if (i > 0) {
+                float y1 = points.get(i - 1).y;
+                if (y1 > startY) {
+                    y1 = y1 - (startY + count) >= 0 ? (startY + count) : y1;
+                } else {
+                    y1 = startY - count - y1 >= 0 ? startY - count : y1;
+                }
+                canvas.drawLine(points.get(i - 1).x, y1, points.get(i).x, y, lineChartData.getDotPaint());
+            }
+            canvas.drawCircle(points.get(i).x, y, 5, lineChartData.getDotPaint());
+        }
+        count += 20;
+        postInvalidate();
+    }
+
+    private int index = 0;
+
+    private void animTwo(Canvas canvas) {
+        for (int i = 0; i < points.size(); i++) {
+            if (i > 0 && index > 0 && i < index) {
+                canvas.drawLine(points.get(i - 1).x, points.get(i - 1).y, points.get(i).x, points.get(i).y, lineChartData.getDotPaint());
+            }
+            if (i > 0 && count > points.get(i - 1).x && count <= points.get(i).x) {
+                float y = (count - points.get(i - 1).x)
+                        / (points.get(i).x - points.get(i - 1).x)
+                        * (points.get(i).y - points.get(i - 1).y)
+                        + points.get(i - 1).y;
+
+                canvas.drawLine(points.get(i - 1).x, points.get(i - 1).y
+                        , count, y, lineChartData.getDotPaint());
+                index = i;
+            }
+            if (i < index)
+                canvas.drawCircle(points.get(i).x, points.get(i).y, 5, lineChartData.getDotPaint());
+        }
+
+        count += 10;
+        postInvalidate();
+    }
+
+
+    private void initViews() {
+        total=15;
+        zero = new Point();
+        points = new ArrayList<>();
+        values = new int[total];
+        years = new int[total];
+        xAxis=new ArrayList<>();
+        yAxis=new ArrayList<>();
+
+        lineChartData=new LineChartData();
+        Random random = new Random();
+        for (int i = 0; i < total; i++) {
+            values[i] = random.nextInt(10);
+            years[i] = 2006 + i;
+            xAxis.add(years[i]+"");
+            yAxis.add(i+"");
+            int index = values[i] - 1;
+            titleNum = Math.max(titleNum, Math.abs(index));
+        }
+        lineChartData.setxAxis(xAxis);
+        lineChartData.setyAxis(yAxis);
+        rects = new ArrayList<>();
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        width = w;
+        height = h;
+        zero.x = w / 10;
+        zero.y = h / 10;
+        chartW = w * 8 / 10;
+        chartH = h * 8 / 10;
+        distance= (int) (chartW/total);
+        titleNum *= h / 10;
+        startY = zero.y + chartH * 9 / 10;
+        for (int i = 0; i < total; i++) {
+            PointF point = new PointF();
+            point.x = zero.x + distance*i;
+            point.y = zero.y + chartH * (10 - values[i]) / 10;
+            points.add(point);
+            RectF rectf = new RectF(point.x - 50, point.y - 50, point.x + 50, point.y + 50);
+            rects.add(rectf);
+        }
+    }
+
+    private boolean isDrawLine = false;
+    private boolean isMove = false;
+    private PointF movePoint = new PointF();
+    private int selectCount = -1;
+    private Point lastDown = new Point();
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                isMove = false;
+                boolean isSelect=false;
+                for (int i = 0; i < points.size(); i++) {
+                    if (Math.abs(points.get(i).x - event.getX()) <= 50
+                            &&event.getY()<=zero.y+chartH
+                            &&event.getY()>=zero.y) {
+                        if (selectCount == i) {
+                            selectCount = -1;
+                            isSelect = false;
+                        } else {
+                            selectCount = i;
+                            isSelect = true;
+                        }
+                        break;
+                    }
+                }
+                if (!isSelect)
+                    selectCount=-1;
+                lastDown.x = (int) event.getX();
+                lastDown.y = (int) event.getY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                int x = (int) event.getX();
+                int y = (int) event.getY();
+                if (Math.sqrt((x - lastDown.x) * (x - lastDown.x) + (y - lastDown.y) * (y - lastDown.y)) > 50) {
+                    isMove = true;
+                    isDrawLine = true;
+                    movePoint.x = event.getX();
+                    movePoint.y = event.getY();
+                    selectCount = -1;
+                    postInvalidate();
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                isDrawLine = false;
+                if (!isMove) {
+                    //点击监听
+                    if (listener!=null)
+                        listener.onClick(selectCount);
+                    postInvalidate();
+                }
+                break;
+        }
+        return true;
+    }
+
+    private void twoPointEvent(MotionEvent event){
+        switch (event.getAction()){
+            case MotionEvent.ACTION_POINTER_DOWN:
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                break;
+            case MotionEvent.ACTION_MOVE:
+                break;
+        }
+    }
+
+    public int getSelectCount(){
+        return selectCount;
+    }
+
+    public void nextDot(){
+        if (selectCount!=-1){
+            if (selectCount==points.size()-1)
+                selectCount=0;
+            else
+                selectCount+=1;
+            postInvalidate();
+        }
+    }
+
+    public void lastDot(){
+        if (selectCount!=-1){
+            if (selectCount==0)
+                selectCount=points.size()-1;
+            else
+                selectCount-=1;
+            postInvalidate();
+        }
+    }
+
+    public void reset(){
+        selectCount=-1;
+        postInvalidate();
+    }
+
+    public void setIsCanScale(boolean isCanScale) {
+        this.isCanScale = isCanScale;
+    }
+
+    public static interface onClickDotListener{
+        public void onClick(int count);
+    }
+
+    private onClickDotListener listener;
+    public void setListener(onClickDotListener listener){
+        this.listener=listener;
+    }
+}

@@ -1,0 +1,194 @@
+package demo.cn.chartdemo.activity;
+
+import android.graphics.Color;
+import android.graphics.RectF;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import de.greenrobot.event.EventBus;
+import demo.cn.chartdemo.R;
+import demo.cn.chartdemo.Utils.ClickFilter;
+import demo.cn.chartdemo.event.IEvent;
+import demo.cn.chartdemo.event.SubcolumnSelectEvent;
+import demo.cn.chartdemo.model.ColumnDataModel;
+import demo.cn.chartdemo.model.ColumnModel;
+import demo.cn.chartdemo.model.SubcolumnModel;
+import demo.cn.chartdemo.view.ColumnChartView;
+import demo.cn.chartdemo.view.LineChartView;
+import demo.cn.chartdemo.view.PieChartView;
+import demo.cn.chartdemo.view.PopupLayout;
+
+public class MainActivity extends AppCompatActivity {
+
+    private PieChartView pieChart;
+    private PopupLayout toast;
+    private ColumnChartView columnChartView;
+    private RectF rect;
+    private int screenWidth;
+    private int screenHeight;
+    private LineChartView lineChartView;
+
+    private Button pieBtn,lineBtn,columBtn;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+
+        pieBtn = (Button)findViewById(R.id.btn_pie);
+        lineBtn = (Button)findViewById(R.id.btn_line);
+        columBtn = (Button)findViewById(R.id.btn_column);
+        lineChartView = (LineChartView)findViewById(R.id.chat_line);
+
+
+        pieBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pieChart.setVisibility(View.VISIBLE);
+                columnChartView.setVisibility(View.GONE);
+                lineChartView.setVisibility(View.GONE);
+
+            }
+        });
+
+        lineBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pieChart.setVisibility(View.GONE);
+                columnChartView.setVisibility(View.GONE);
+                lineChartView.setVisibility(View.VISIBLE);
+
+            }
+        });
+
+
+        columBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pieChart.setVisibility(View.GONE);
+                columnChartView.setVisibility(View.VISIBLE);
+                lineChartView.setVisibility(View.GONE);
+
+            }
+        });
+
+
+
+        EventBus.getDefault().register(this);
+        pieChart= (PieChartView) findViewById(R.id.piechart);
+        toast= (PopupLayout) findViewById(R.id.toast);
+        columnChartView = (ColumnChartView) findViewById(R.id.columnchart);
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+        screenWidth = dm.widthPixels;
+        screenHeight = dm.heightPixels - 50;
+
+        toast.setLeftListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ClickFilter.filter())
+                    return;
+                pieChart.clickView(true);
+            }
+        });
+
+        toast.setRightListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ClickFilter.filter())
+                    return;
+                pieChart.clickView(false);
+            }
+        });
+
+        rect=new RectF();
+        ViewGroup.LayoutParams layoutParams=toast.getLayoutParams();
+
+        generateDummyData();
+        initColumnAction();
+    }
+
+
+
+    private void initColumnAction(){
+        toast.setLeftListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                columnChartView.step(-1);
+            }
+        });
+
+        toast.setRightListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                columnChartView.step(1);
+            }
+        });
+    }
+
+    public void  onEvent(IEvent event){
+        //TODO 事件处理需要再细化
+        if (event instanceof SubcolumnSelectEvent){
+            SubcolumnSelectEvent ev = (SubcolumnSelectEvent) event;
+            if (ev.isShowtoast()){
+                toast.setVisibility(View.VISIBLE);
+            }else {
+                toast.setVisibility(View.GONE);
+                columnChartView.reset();
+            }
+
+        }
+    }
+
+
+    private void generateDummyData(){
+        int columnCount = 50;
+        int subcolumnCount = 5;
+        ColumnDataModel columnDataModel = new ColumnDataModel();
+        List<ColumnModel> columnModels = new ArrayList<>();
+        for (int i = 0; i < columnCount; i++){
+            ColumnModel columnModel = new ColumnModel();
+            columnModel.setName(2015 + i + "");
+            List<SubcolumnModel> subcolumnModels = new ArrayList<>();
+            for (int j = 0; j < subcolumnCount; j++){
+                SubcolumnModel subcolumnModel = new SubcolumnModel();
+                subcolumnModel.setFirstIndex(i);
+                subcolumnModel.setSecondIndex(j);
+                subcolumnModel.setOriginColor(Color.GREEN);
+                subcolumnModel.setUnSelectedColor(Color.GRAY);
+                subcolumnModel.setColor(Color.BLUE);
+                subcolumnModel.setValue(100);
+                subcolumnModels.add(subcolumnModel);
+            }
+            columnModel.setSubcolumnModels(subcolumnModels);
+            columnModels.add(columnModel);
+        }
+        columnDataModel.setColumnModels(columnModels);
+        columnChartView.setmColumnData(columnDataModel);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()){
+            case MotionEvent.ACTION_DOWN:
+                if (rect.contains(event.getX(),event.getY())){
+                    Toast.makeText(getApplication(),"1234",Toast.LENGTH_SHORT).show();
+                }
+        }
+        return super.onTouchEvent(event);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
+    }
+}

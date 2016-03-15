@@ -1,0 +1,66 @@
+package demo.cn.chartdemo.activity;
+
+import android.graphics.RectF;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
+import demo.cn.chartdemo.R;
+import demo.cn.chartdemo.Utils.ClickFilter;
+import demo.cn.chartdemo.view.PieChartView;
+import demo.cn.chartdemo.view.PopupLayout;
+
+public class MainActivity extends AppCompatActivity {
+
+    private PieChartView pieChart;
+    private PopupLayout toast;
+    private RectF rect;
+    private int screenWidth;
+    private int screenHeight;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        pieChart= (PieChartView) findViewById(R.id.piechart);
+        toast= (PopupLayout) findViewById(R.id.toast);
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+        screenWidth = dm.widthPixels;
+        screenHeight = dm.heightPixels - 50;
+
+        toast.setLeftListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ClickFilter.filter())
+                    return;
+                pieChart.clickView(true);
+            }
+        });
+
+        toast.setRightListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ClickFilter.filter())
+                    return;
+                pieChart.clickView(false);
+            }
+        });
+
+        rect=new RectF();
+        ViewGroup.LayoutParams layoutParams=toast.getLayoutParams();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()){
+            case MotionEvent.ACTION_DOWN:
+                if (rect.contains(event.getX(),event.getY())){
+                    Toast.makeText(getApplication(),"1234",Toast.LENGTH_SHORT).show();
+                }
+        }
+        return super.onTouchEvent(event);
+    }
+}

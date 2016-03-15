@@ -1,0 +1,30 @@
+package demo.cn.chartdemo.event;
+
+import demo.cn.chartdemo.model.SubcolumnModel;
+
+/**
+ * Created by Albert on 2016/2/3.
+ * Mail : lbh@jusfoun.com
+ * TODO :
+ * Description:子柱状图选中、取消选中发送此event
+ */
+public class SubcolumnSelectEvent implements IEvent{
+    private SubcolumnModel subcolumnModel;
+    private boolean showtoast;
+
+    public SubcolumnModel getSubcolumnModel() {
+        return subcolumnModel;
+    }
+
+    public void setSubcolumnModel(SubcolumnModel subcolumnModel) {
+        this.subcolumnModel = subcolumnModel;
+    }
+
+    public boolean isShowtoast() {
+        return showtoast;
+    }
+
+    public void setShowtoast(boolean showtoast) {
+        this.showtoast = showtoast;
+    }
+}

@@ -1,0 +1,232 @@
+package demo.cn.chartdemo.Utils;
+
+import android.graphics.Point;
+import android.graphics.PointF;
+import android.util.Log;
+
+/**
+ * Author  wangchenchen
+ * CreateDate 2016/1/14.
+ * Email wcc@jusfoun.com
+ * Description
+ */
+public class MathHelper {
+
+    private static MathHelper mathHelper;
+    private PointF pointF=new PointF();
+
+    private MathHelper(){
+
+    }
+    public static MathHelper getInstanse() {
+        if (mathHelper == null) {
+            mathHelper = new MathHelper();
+        }
+        return mathHelper;
+    }
+
+    /**
+     * 判断一个点是否在圆内
+     *
+     * @param mRadius 半径
+     * @param x       x坐标
+     * @param y       y坐标
+     * @param mCentre 圆心
+     * @return true是 false 否
+     */
+    public boolean isInPie(float mRadius, float x, float y, Point mCentre) {
+        int x2 = (int) Math.pow(x - mCentre.x, 2);
+        int y2 = (int) Math.pow(y - mCentre.y, 2);
+        float radius = (float) Math.sqrt(x2 + y2);
+        if (radius <= mRadius)
+            return true;
+        return false;
+    }
+
+    /**
+     * 判断一个点是否在圆内
+     *
+     * @param maxRadius 大圆半径
+     * @param minRadius 小圆半径
+     * @param x       x坐标
+     * @param y       y坐标
+     * @param mCentre 圆心
+     * @return true是 false 否
+     */
+    public boolean isInArc(float maxRadius, float minRadius
+            , float x, float y, Point mCentre) {
+        int x2 = (int) Math.pow(x - mCentre.x, 2);
+        int y2 = (int) Math.pow(y - mCentre.y, 2);
+        float radius = (float) Math.sqrt(x2 + y2);
+        if (radius<=maxRadius&&radius>=minRadius)
+            return true;
+        return false;
+    }
+
+    /**判断一个点是否在一段圆弧内
+     *
+     * @param maxRadius 大圆半径
+     * @param minRadius 小圆半径
+     * @param x x坐标
+     * @param y y坐标
+     * @param mCentre 中心点坐标
+     * @param startAngel 开始角度
+     * @param endAngel 结束角度
+     * @return true 是 false 否
+     */
+    public boolean isAngelArc(float maxRadius, float minRadius
+            , float x, float y, Point mCentre,float startAngel,float endAngel){
+        if (startAngel>360)
+            startAngel-=360;
+        if (startAngel<0)
+            startAngel=360+startAngel;
+        endAngel+=startAngel;
+        if (endAngel>360)
+            endAngel-=360;
+        if (endAngel<0)
+            endAngel+=360;
+        int x2 = (int) Math.pow(x - mCentre.x, 2);
+        int y2 = (int) Math.pow(y - mCentre.y, 2);
+        float radius = (float) Math.sqrt(x2 + y2);
+        float b=y-mCentre.y;
+        float currentArc= (float) Math.asin(b / radius);
+        float angel= (float) Math.toDegrees(currentArc);
+        Log.e("angel1",angel+"");
+        if (x<mCentre.x){
+            angel=180f-angel;
+        }
+        if (angel<=0){
+            angel=360f+angel;
+        }
+        Log.e("angel2",angel+"");
+
+//        if (b<0){
+//            currentArc= (float) (Math.asin(y / radius)+Math.PI);
+//        }else if (b>=0){
+//            currentArc= (float)Math.asin(y / radius);
+//        }
+        if (radius<=maxRadius
+                &&radius>=minRadius
+                ) {
+            if (startAngel<endAngel) {
+                if (angel <= endAngel&&angel>startAngel)
+                    return true;
+            }else if (startAngel>endAngel){
+                endAngel+=360;
+                if (angel<startAngel)
+                    angel+=360;
+                if (angel <= endAngel)
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 获取点xy与中心点连线角度
+     * @param x x 坐标
+     * @param y y 坐标
+     * @param mCentre 中心点
+     * @return 角度
+     */
+    public float getAngel(float x,float y,Point mCentre){
+        float angel=0;
+        float c= (float) Math.sqrt((x-mCentre.x)*(x-mCentre.x)
+                +(y-mCentre.y)*(y-mCentre.y));
+        float a=mCentre.x-x;
+        float b=mCentre.y-y;
+        if (b==0&&a>=0){
+            angel=0;
+        }else if (b==0&&a<0){
+            angel=180;
+        }else if (a==0&&b>=0){
+            angel=90;
+        }else if (a==0&&b<0){
+            angel=270;
+        }else if (b<0){
+            angel= (float) (Math.PI+Math.asin(a/c)+90*Math.PI/180);
+        }else if (b>0){
+            angel= (float) (90*Math.PI/180-Math.asin(a/c));
+        }
+        angel=(float) (angel*180/Math.PI);
+        angel+=180;
+        if (angel>360)
+            angel-=360;
+        return angel;
+    }
+
+    /**
+     * 根据圆心坐标与角度计算圆心射线与圆交点坐标
+     *
+     * @param angel  角度
+     * @param mCentre 圆心
+     * @param radius 圆半径
+     * @return 点坐标
+     */
+    public PointF getPoint(float angel,float radius,Point mCentre){
+
+        if (angel >= 360)
+            angel -= 360;
+        if (angel<=0)
+            angel+=360;
+        float X=mCentre.x;
+        float Y=mCentre.y;
+        float arcAngle = (float) (Math.PI * (angel / 180.0f));
+        if (Float.compare(arcAngle, 0.0f) < 0) {
+            pointF.x = pointF.y = 0;
+        } else if (Float.compare(angel, 0.0f) == 0) {
+            pointF.x = X + radius;
+            pointF.y = Y;
+        } else if (Float.compare(angel, 90.0f) == 0) {
+            pointF.x = X;
+            pointF.y = Y + radius;
+        } else if (Float.compare(angel, 180.0f) == 0) {
+            pointF.x = X - radius;
+            pointF.y = Y;
+        } else if (Float.compare(angel, 270.0f) == 0) {
+            pointF.x = X;
+            pointF.y = Y - radius;
+        } else if (Float.compare(angel, 0.0f) > 0
+                && Float.compare(angel, 90.0f) < 0) {
+            pointF.x = (float) (X + Math.cos(arcAngle) * radius);
+            pointF.y = (float) (Y + Math.sin(arcAngle) * radius);
+
+        } else if (Float.compare(angel, 90.0f) > 0
+                && Float.compare(angel, 180.0f) < 0) {
+            angel = 180 - angel;
+            arcAngle = (float) (Math.PI * (angel / 180.0f));
+            pointF.x = (float) (X - Math.cos(arcAngle) * radius);
+            pointF.y = (float) (Y + Math.sin(arcAngle) * radius);
+        } else if (Float.compare(angel, 180.0f) > 0
+                && Float.compare(angel, 270.0f) < 0) {
+            angel -= 180;
+            arcAngle = (float) (Math.PI * (angel / 180.0f));
+            pointF.x = (float) (X - Math.cos(arcAngle) * radius);
+            pointF.y = (float) (Y - Math.sin(arcAngle) * radius);
+        } else if (Float.compare(angel, 270.0f) > 0
+                && Float.compare(angel, 360.0f) < 0) {
+            angel = 360 - angel;
+            arcAngle = (float) (Math.PI * (angel / 180.0f));
+            pointF.x = (float) (X + Math.cos(arcAngle) * radius);
+            pointF.y = (float) (Y - Math.sin(arcAngle) * radius);
+        }
+
+        return pointF;
+    }
+
+    /**
+     * 获取一条线和y轴交点y坐标
+     * @param startX 线开始x坐标
+     * @param startY 线开始y坐标
+     * @param endX 线结束x坐标
+     * @param endY 线结束y坐标
+     * @param index
+     * @return
+     */
+    public float getPointF(float startX,float startY,float endX,float endY,float index){
+        float y=index/(endX-startX)*(endY-startY);
+        return y;
+    }
+
+
+}

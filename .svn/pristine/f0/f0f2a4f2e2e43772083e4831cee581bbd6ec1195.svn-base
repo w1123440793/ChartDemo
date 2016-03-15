@@ -1,0 +1,165 @@
+package demo.cn.chartdemo.view;
+
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.os.Build;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.View;
+
+import demo.cn.chartdemo.chart.ColumnChartCaculator;
+import demo.cn.chartdemo.chart.ColumnChartRender;
+import demo.cn.chartdemo.chart.ColumnTouchHandler;
+import demo.cn.chartdemo.model.ColumnDataModel;
+import demo.cn.chartdemo.model.ColumnModel;
+import demo.cn.chartdemo.model.SubcolumnModel;
+
+/**
+ * Created by Albert on 2016/2/1.
+ * Mail : lbh@jusfoun.com
+ * TODO :
+ * Description:柱状图view
+ */
+public class ColumnChartView extends View{
+
+    //坐标原点
+    private Point mZero;
+
+    private ColumnChartCaculator mCaculator;
+    private ColumnChartRender mRender;
+    private ColumnTouchHandler mHandler;
+
+    private Canvas mCanvas;
+
+
+
+    //数据
+    private ColumnDataModel mColumnData;
+
+    //坐标轴画笔
+    Paint mAxisPaint;
+
+
+    //图表宽高
+    private float mChartWidth,mChartHeight;
+
+
+    public ColumnChartView(Context context) {
+        super(context);
+        initView();
+    }
+
+    public ColumnChartView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initView();
+    }
+
+    public ColumnChartView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        initView();
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public ColumnChartView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
+        initView();
+    }
+
+
+    private void initView(){
+        mZero = new Point();
+        mAxisPaint = new Paint();
+        mAxisPaint.setColor(Color.RED);
+        mAxisPaint.setAntiAlias(true);
+        mAxisPaint.setStrokeWidth(2);
+        mAxisPaint.setStyle(Paint.Style.FILL);
+
+    }
+
+    public ColumnDataModel getmColumnData() {
+        return mColumnData;
+    }
+
+    public void setmColumnData(ColumnDataModel mColumnData) {
+        this.mColumnData = mColumnData;
+    }
+
+    private void drawColumnChart(Canvas canvas){
+        if (mColumnData != null){
+            for (ColumnModel columnModel : mColumnData.getColumnModels()){
+                for (SubcolumnModel subcolumnModel : columnModel.getSubcolumnModels()){
+                    mRender.draw(canvas,subcolumnModel);
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        mCanvas = canvas;
+        canvas.drawColor(Color.WHITE);
+        drawLines(canvas);
+        drawAxis(canvas);
+        drawColumnChart(canvas);
+
+    }
+
+    /**
+     * TODO 绘制坐标文字
+     * @param canvas
+     */
+    private void drawAxis(Canvas canvas){
+
+    }
+
+    /**
+     * TODO:绘制坐标系虚线
+     * @param canvas
+     */
+    private void drawLines(Canvas canvas){
+        canvas.drawLine(mZero.x, mZero.y, mZero.x, mZero.y + mChartHeight, mAxisPaint);
+        canvas.drawLine(mZero.x, mZero.y + mChartHeight, mZero.x + mChartWidth, mZero.y + mChartHeight, mAxisPaint);
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        mChartWidth = w * 8 / 10;
+        mChartHeight = h * 8 / 10;
+        mZero.x = w / 10;
+        mZero.y = h / 10;
+        mCaculator = new ColumnChartCaculator(mZero,mChartHeight,mChartWidth);
+        mRender = new ColumnChartRender(mColumnData,mCaculator);
+        mHandler = new ColumnTouchHandler(mColumnData);
+        mHandler.setListener(new ColumnTouchHandler.ValueSelectedListener() {
+            @Override
+            public void valueSelected(SubcolumnModel subcolumnModel) {
+                updateView(subcolumnModel);
+            }
+        });
+    }
+
+    private void updateView(SubcolumnModel subcolumnModel){
+        for (ColumnModel columnModel : mColumnData.getColumnModels()){
+            for (SubcolumnModel model : columnModel.getSubcolumnModels()){
+                if (model.equals(subcolumnModel)){
+                    model.setColor(model.getOriginColor());
+                }else {
+                    model.setColor(model.getUnSelectedColor());
+                }
+                postInvalidate();
+            }
+        }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        super.onTouchEvent(event);
+        return mHandler.handleEvent(event);
+    }
+}

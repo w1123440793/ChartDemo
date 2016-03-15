@@ -1,0 +1,74 @@
+package demo.cn.chartdemo.chart;
+
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.RectF;
+
+import demo.cn.chartdemo.Utils.ColumnUtil;
+import demo.cn.chartdemo.model.ColumnDataModel;
+import demo.cn.chartdemo.model.ColumnModel;
+
+/**
+ * Created by Albert on 2016/2/3.
+ * Mail : lbh@jusfoun.com
+ * TODO :稍后根据具体的model进行Y轴刻度计算和绘制
+ * Description: 坐标轴渲染器
+ */
+public class AxesRender {
+    private ColumnDataModel mColumnData;
+    private ColumnChartCaculator mCaculator;
+    private float columnwidth;
+
+    private Point mZero;
+    private float mChartHeight;
+
+    private Paint mAxisXPaint;
+
+    public AxesRender(ColumnDataModel mDataModel, ColumnChartCaculator mCaculator) {
+        this.mColumnData = mDataModel;
+        this.mCaculator = mCaculator;
+        this.columnwidth = mCaculator.getColumnWidth(mDataModel);
+        this.mZero = mCaculator.getmZero();
+        this.mChartHeight = mCaculator.getmChartHeight();
+        mAxisXPaint = new Paint();
+    }
+
+
+
+    public void draw(Canvas canvas,Point mTranslate){
+        //TODO 绘制会出现文字过长的情况，需要进行处理  axisXPaint.measureText(model.getName())?
+
+
+        float columnWidth = mCaculator.getColumnWidth(mColumnData);
+        int index = 0;
+        for (ColumnModel model : mColumnData.getColumnModels()){
+            canvas.save();
+            canvas.translate(mTranslate.x, mTranslate.y);
+            mAxisXPaint.setColor(model.getTextcolor());
+            mAxisXPaint.setAntiAlias(true);
+            mAxisXPaint.setTextSize(model.getTextsize());
+            if (mColumnData.isHorizontal()){
+                canvas.rotate(-45, mZero.x - ColumnUtil.axesXoffset, mZero.y + mChartHeight - ColumnUtil.columnSpace - index * (columnWidth + ColumnUtil.columnSpace));
+                //TODO 横向柱状图上下滑动尚未进行处理
+                RectF rectF = model.getSubcolumnModels().get(0).getRect();
+                if (((rectF.top + mTranslate.y) <= (mZero.y + mChartHeight) ) )
+                    canvas.drawText(model.getName(),
+                            mZero.x - ColumnUtil.axesXoffset,
+                            mZero.y + mChartHeight - ColumnUtil.columnSpace - index * (columnWidth + ColumnUtil.columnSpace),
+                            mAxisXPaint);
+            }else {
+                canvas.rotate(-45, mZero.x + index * (columnWidth + ColumnUtil.columnSpace), mZero.y + mChartHeight + ColumnUtil.axesXoffset);
+                if ((mZero.x + index * (columnWidth + ColumnUtil.columnSpace)+mTranslate.x + ColumnUtil.columnSpace>mZero.x) )
+                    canvas.drawText(model.getName(),
+                            mZero.x + index * (columnWidth + ColumnUtil.columnSpace),
+                            mZero.y + mChartHeight + ColumnUtil.axesXoffset,
+                            mAxisXPaint);
+            }
+
+            canvas.restore();
+            index++;
+
+        }
+    }
+}

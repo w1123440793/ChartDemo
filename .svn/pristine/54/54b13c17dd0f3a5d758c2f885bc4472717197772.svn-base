@@ -1,0 +1,52 @@
+package demo.cn.chartdemo.chart;
+
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Point;
+
+import demo.cn.chartdemo.Utils.ColumnUtil;
+import demo.cn.chartdemo.model.ColumnDataModel;
+import demo.cn.chartdemo.model.ColumnModel;
+
+/**
+ * Created by Albert on 2016/2/3.
+ * Mail : lbh@jusfoun.com
+ * TODO :
+ * Description: 坐标轴渲染器
+ */
+public class AxesRender {
+    private ColumnDataModel mColumnData;
+    private ColumnChartCaculator mCaculator;
+    private float columnwidth;
+
+    private Point mZero;
+    private float mChartHeight;
+
+    public AxesRender(ColumnDataModel mDataModel, ColumnChartCaculator mCaculator) {
+        this.mColumnData = mDataModel;
+        this.mCaculator = mCaculator;
+        this.columnwidth = mCaculator.getColumnWidth(mDataModel);
+        this.mZero = mCaculator.getmZero();
+        this.mChartHeight = mCaculator.getmChartHeight();
+    }
+
+    public void draw(Canvas canvas){
+        //TODO 绘制会出现文字过长的情况，需要进行处理  axisXPaint.measureText(model.getName())?
+        Paint axisXPaint = new Paint();
+        axisXPaint.setColor(Color.RED);
+        axisXPaint.setAntiAlias(true);
+        axisXPaint.setTextSize(16);
+
+        float columnWidth = mCaculator.getColumnWidth(mColumnData);
+        int index = 0;
+        for (ColumnModel model : mColumnData.getColumnModels()){
+            canvas.save();
+            canvas.rotate(-45, mZero.x + index * (columnWidth + ColumnUtil.columnSpace), mZero.y + mChartHeight + ColumnUtil.axesXoffset);
+            canvas.drawText(model.getName(), mZero.x + index * (columnWidth + ColumnUtil.columnSpace), mZero.y + mChartHeight + ColumnUtil.axesXoffset, axisXPaint);
+            canvas.restore();
+            index++;
+
+        }
+    }
+}

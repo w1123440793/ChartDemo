@@ -1,0 +1,679 @@
+package demo.cn.chartdemo.view;
+
+import android.animation.ValueAnimator;
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.PointF;
+import android.graphics.RectF;
+import android.text.TextPaint;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.VelocityTracker;
+import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import demo.cn.chartdemo.Utils.MathHelper;
+import demo.cn.chartdemo.model.PieChartModel;
+
+/**
+ * Author  wangchenchen
+ * CreateDate 2016/1/20.
+ * Email wcc@jusfoun.com
+ * Description
+ */
+public class PieChartView extends View {
+
+    private List<Integer> grayColors;//未选中饼图颜色
+    private List<RectF> rects;
+    private int red, green, blue;//随机生成红绿蓝色值
+    private Paint paint;//画笔
+    private Point mCentre;//中心点
+    private int radius;//圆半径
+    private Context context;
+    private RectF maxArc, minArc;//扇形区域
+    private RectF maxSelectArc, minSelectArc;//外扩扇形区域
+    private RectF maxWithDrawArc, minWithDrawArc;//外扩扇形区域
+    private int clickCount = -1, lastCount = -1;//点击到扇形
+    private List<PieChartModel> pieData;//扇形数据
+    private List<Integer> colors;//所有扇形颜色
+    private TextPaint textPaint;//字体画笔
+    private VelocityTracker mVelocity;
+    private int index;
+    private int width, height;
+    private PointF txtPoint;//字体位置
+
+    private RectF bottomRect;
+
+    public PieChartView(Context context) {
+        super(context);
+        initView(context);
+    }
+
+    public PieChartView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initView(context);
+    }
+
+    public PieChartView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        initView(context);
+    }
+
+    public void clickView(boolean is){
+        countAngel=0;
+        lastCount=clickCount;
+        if (is) {
+            clickCount += 1;
+            if (clickCount==colors.size())
+                clickCount=0;
+        }
+        else {
+            clickCount -= 1;
+            if (clickCount<0)
+                clickCount=colors.size()-1;
+        }
+        clickAngel = pieData.get(clickCount).getStartAngel() + pieData.get(clickCount).getSectorAngel() / 2;
+        if (clickAngel >= 360)
+            clickAngel -= 360;
+        outCount = 0f;
+        if (clickAngel >= 270 && clickAngel <= 360) {
+            clickAngel = 360 - clickAngel + 90;
+        } else if (clickAngel >= 90 && clickAngel <= 270) {
+            clickAngel = 90 - clickAngel;
+        } else if (clickAngel >= 0 && clickAngel <= 90) {
+            clickAngel = 90 - clickAngel;
+        }
+        postInvalidate();
+    }
+
+    /**
+     * 初始化
+     *
+     * @param context
+     */
+    private void initView(Context context) {
+        this.context = context;
+        bottomRect=new RectF();
+        colors = new ArrayList<>();
+        pieData = new ArrayList<>();
+        grayColors = new ArrayList<>();
+        maxWithDrawArc = new RectF();
+        minWithDrawArc = new RectF();
+        Random random = new Random();
+        rects=new ArrayList<>();
+        int count = random.nextInt(10);
+        while (count < 2) {
+            count = random.nextInt(10);//随机生成饼图数量
+        }
+        //初始化饼图属性
+        for (int i = 0; i < count; i++) {
+            if (i == 0)
+                grayColors.add(Color.DKGRAY);
+            else {
+                if (grayColors.get(i - 1).equals(Color.DKGRAY))
+                    grayColors.add(Color.GRAY);
+                else if (grayColors.get(i - 1).equals(Color.GRAY))
+                    grayColors.add(Color.LTGRAY);
+                else if (grayColors.get(i - 1).equals(Color.LTGRAY))
+                    grayColors.add(Color.DKGRAY);
+            }
+            PieChartModel model = new PieChartModel();
+            float percent = 1f / count * 100;
+            DecimalFormat decimalFormat = new DecimalFormat(".00");
+            model.setPercent(decimalFormat.format(percent) + "%");
+            model.setStartAngel(360f / count * i);
+            model.setSectorAngel(360f / count);
+            red = random.nextInt(255);
+            green = random.nextInt(255);
+            blue = random.nextInt(255);
+            colors.add(Color.argb(255, red, green, blue));
+            pieData.add(model);
+            txtPoint = new PointF();
+        }
+    }
+
+    private float count;
+    private float clickAngel = 0f;
+    private float countAngel = 0f;
+
+    private float outCount = 0f;
+    private float rectCount = 0f;
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        //设置画笔
+
+        width=w;
+        height =h;
+        paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(Color.CYAN);
+        mCentre = new Point(w / 2, h / 2);
+        radius = Math.min(mCentre.x, mCentre.y);
+        maxArc = new RectF();
+        minArc = new RectF();
+        maxSelectArc = new RectF();
+        minSelectArc = new RectF();
+        index = (int) (0.1f * radius);
+        //设置饼图大小
+        maxArc.set(mCentre.x - 6 * index, mCentre.y - 6 * index
+                , mCentre.x + 6 * index, mCentre.y + 6 * index);
+        minArc.set(mCentre.x - 4 * index, mCentre.y - 4 * index
+                , mCentre.x + 4 * index, mCentre.y + 4 * index);
+        maxSelectArc.set(mCentre.x - 6.5f * index, mCentre.y - 6.5f * index
+                , mCentre.x + 6.5f * index, mCentre.y + 6.5f * index);
+        minSelectArc.set(mCentre.x - 4.5f * index, mCentre.y - 4.5f * index
+                , mCentre.x + 4.5f * index, mCentre.y + 4.5f * index);
+        //选中饼图外扩大小
+        count = index / 2;
+
+        //设置字体画笔
+        textPaint = new TextPaint();
+        textPaint.setColor(Color.BLACK);
+        textPaint.setTextSize(25);
+        textPaint.setAntiAlias(true);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+
+        int k= (int) (w/colors.size());
+        for (int i = 0; i < colors.size(); i++) {
+            float angel=pieData.get(i).getStartAngel()+pieData.get(i).getSectorAngel()/2-90;
+            RectF rectf=new RectF();
+            float left=width/2+angel/360f*width-20;
+            float top= mCentre.y+radius+20;
+            float right=width/2+angel/360f*width+20;
+            float bottom=mCentre.y+radius+60;
+            if (left > width) {
+                left -= width;
+                right -= width;
+            } else if (right < 0) {
+                left += width;
+                right += width;
+            }
+            rectf.set(left,top,right,bottom);
+            rects.add(rectf);
+        }
+        bottomRect.set(0,mCentre.y+radius,width,h);
+        mVelocity = VelocityTracker.obtain();
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        canvas.save();
+        canvas.drawColor(Color.WHITE);//绘制背景
+
+//        if (rectCount <= (0.7 * radius)) {
+//            paint.setColor(Color.BLUE);
+//            canvas.drawRoundRect(maxArc, rectCount, rectCount, paint);
+//            rectCount += 5f;
+//        } else
+        if (animCount <= 360) {//饼图出现多好，从0度绘制到360度
+
+            paint.setColor(Color.BLUE);
+//            canvas.drawRoundRect(maxArc, rectCount, rectCount, paint);
+            startAnim(canvas);
+            postInvalidate();
+        } else {
+
+            if (clickCount != -1 && outCount <= count) {
+                minSelectArc.set(mCentre.x - 4 * index - outCount, mCentre.y - 4 * index - outCount
+                        , mCentre.x + 4 * index + outCount, mCentre.y + 4 * index + outCount);
+                maxSelectArc.set(mCentre.x - 6 * index - outCount, mCentre.y - 6 * index - outCount
+                        , mCentre.x + 6 * index + outCount, mCentre.y + 6 * index + outCount);
+                minWithDrawArc.set(mCentre.x - 4.5f * index + outCount, mCentre.y - 4.5f * index + outCount
+                        , mCentre.x + 4.5f * index - outCount, mCentre.y + 4.5f * index - outCount);
+                maxWithDrawArc.set(mCentre.x - 6.5f * index + outCount, mCentre.y - 6.5f * index + outCount
+                        , mCentre.x + 6.5f * index - outCount, mCentre.y + 6.5f * index - outCount);
+
+                for (int i = 0; i < pieData.size(); i++) {
+                    if (i == clickCount && clickCount != lastCount) {
+                        paint.setColor(colors.get(i));
+                        canvas.drawArc(maxSelectArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+//                        float angel = pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() / 2;
+//                        angel = angel > 360 ? angel - 360 : angel;
+//                        txtPoint = MathHelper.getInstanse().getPoint(angel, 5f * index + outCount, mCentre);
+//                        canvas.drawText(pieData.get(i).getPercent(), txtPoint.x, txtPoint.y, textPaint);
+                    } else if (i == lastCount && clickCount != lastCount && lastCount != -1) {
+                        paint.setColor(colors.get(i));
+                        canvas.drawArc(maxWithDrawArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+//                        float angel = pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() / 2;
+//                        angel = angel > 360 ? angel - 360 : angel;
+//                        txtPoint = MathHelper.getInstanse().getPoint(angel, 5.5f * index - outCount, mCentre);
+//                        canvas.drawText(pieData.get(i).getPercent(), txtPoint.x, txtPoint.y, textPaint);
+                    } else if (i == clickCount && clickCount == lastCount) {
+                        paint.setColor(colors.get(i));
+                        canvas.drawArc(maxWithDrawArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+//                        float angel = pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() / 2;
+//                        angel = angel > 360 ? angel - 360 : angel;
+//                        txtPoint = MathHelper.getInstanse().getPoint(angel, 5.5f * index - outCount, mCentre);
+//                        canvas.drawText(pieData.get(i).getPercent(), txtPoint.x, txtPoint.y, textPaint);
+                    } else {
+                        paint.setColor(grayColors.get(i));
+                        canvas.drawArc(maxArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+                        paint.setColor(Color.WHITE);
+                        canvas.drawArc(minArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+//                        txtPoint = MathHelper.getInstanse().getPoint(pieData.get(i).getStartAngel() + countAngel + pieData.get(i).getSectorAngel() / 2
+//                                , 0.5f * radius, mCentre);
+//                        canvas.drawText(pieData.get(i).getPercent(), txtPoint.x, txtPoint.y, textPaint);
+                        paint.setColor(Color.WHITE);
+                    }
+                }
+                if (Math.abs(count-outCount)<3){
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                outCount += 3f;
+                postInvalidate();
+            } else {
+                if (clickCount != -1 && Math.abs(clickAngel - countAngel) >= 0) {
+
+                    //点击后旋转动画，如果点击部分中心点在左边逆时针转动，在右边顺时针转动
+//                    rotateAnim();
+                    float count=Math.abs(clickAngel-countAngel)<5?Math.abs(clickAngel - countAngel):5;
+                    Log.e("countAngel", clickAngel + "");
+                    for (int i = 0; i < pieData.size(); i++) {
+                        float angel = pieData.get(i).getStartAngel();
+                        RectF rectF=rects.get(i);
+                        if (clickAngel > 0) {
+                            angel += count;
+                            rectF.left+=count/360f*width;
+                            rectF.right+=count/360f*width;
+                            if (angel >= 360)
+                                angel -= 360;
+                        } else {
+                            angel -= count;
+                            rectF.left-=count/360f*width;
+                            rectF.right-=count/360f*width;
+                            if (angel < 0)
+                                angel += 360;
+                        }
+                        if (rectF.left > width) {
+                            rectF.left -= width;
+                            rectF.right -= width;
+                        } else if (rectF.right < 0) {
+                            rectF.left += width;
+                            rectF.right += width;
+                        }
+                        pieData.get(i).setStartAngel(angel);
+                        if (i == clickCount) {
+                            paint.setColor(colors.get(clickCount));
+                            canvas.drawArc(maxSelectArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+//                            angel = pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() / 2;
+//                            angel = angel > 360 ? angel - 360 : angel;
+//                            txtPoint = MathHelper.getInstanse().getPoint(angel, 5f * index + count, mCentre);
+//                            canvas.drawText(pieData.get(i).getPercent(), txtPoint.x, txtPoint.y, textPaint);
+                        } else {
+                            if (clickCount == lastCount)
+                                paint.setColor(colors.get(i));
+                            else
+                                paint.setColor(grayColors.get(i));
+                            canvas.drawArc(maxArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+                            paint.setColor(Color.WHITE);
+                            canvas.drawArc(minArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+//                            angel = pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() / 2;
+//                            angel = angel > 360 ? angel - 360 : angel;
+//                            txtPoint = MathHelper.getInstanse().getPoint(angel, 0.5f * radius, mCentre);
+//                            canvas.drawText(pieData.get(i).getPercent(), txtPoint.x, txtPoint.y, textPaint);
+                        }
+                    }
+                    paint.setColor(Color.WHITE);
+                    if (clickAngel >= 0) {
+                        countAngel += count;
+                    } else
+                        countAngel -= count;
+                    postInvalidate();
+                } else {
+                    //根据手势旋转，根据手势运动旋转饼图
+                    countAngel = 0;
+                    clickAngel = 0;
+                    float angel;
+                    if (clickCount == lastCount)
+                        clickCount = -1;
+                    for (int i = 0; i < pieData.size(); i++) {
+                        if (clickCount != -1) {
+
+                            if (i == clickCount) {
+                                paint.setColor(colors.get(clickCount));
+                                canvas.drawArc(maxSelectArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+//                                angel = pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() / 2;
+//                                angel = angel > 360 ? angel - 360 : angel;
+//                                txtPoint = MathHelper.getInstanse().getPoint(angel, 0.5f * radius + count, mCentre);
+//                                canvas.drawText(pieData.get(i).getPercent(), txtPoint.x, txtPoint.y, textPaint);
+                            } else {
+                                if (clickCount == lastCount)
+                                    paint.setColor(colors.get(i));
+                                else
+                                    paint.setColor(grayColors.get(i));
+                                canvas.drawArc(maxArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+                                paint.setColor(Color.WHITE);
+                                canvas.drawArc(minArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+//                                angel = pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() / 2;
+//                                angel = angel > 360 ? angel - 360 : angel;
+//                                txtPoint = MathHelper.getInstanse().getPoint(angel, 0.5f * radius, mCentre);
+//                                canvas.drawText(pieData.get(i).getPercent(), txtPoint.x, txtPoint.y, textPaint);
+                            }
+                        } else {
+
+                            paint.setColor(colors.get(i));
+                            canvas.drawArc(maxArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+                            paint.setColor(Color.WHITE);
+                            canvas.drawArc(minArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+//                            angel = pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() / 2;
+//                            angel = angel > 360 ? angel - 360 : angel;
+//                            txtPoint = MathHelper.getInstanse().getPoint(angel, 0.5f * radius, mCentre);
+//                            canvas.drawText(pieData.get(i).getPercent(), txtPoint.x, txtPoint.y, textPaint);
+                        }
+                    }
+                }
+            }
+        }
+        paint.setColor(Color.WHITE);
+        canvas.drawCircle(mCentre.x, mCentre.y, 4 * index, paint);//绘制中心圆，成为环形饼图
+        if (lastCount != clickCount && lastCount >= 0) {
+            canvas.drawArc(minWithDrawArc, pieData.get(lastCount).getStartAngel(), pieData.get(lastCount).getSectorAngel(), true, paint);
+        }
+        if (clickCount >= 0 && clickCount < pieData.size()) {//判断是否有外扩饼图
+            if (clickCount != lastCount) {
+                canvas.drawArc(minSelectArc, pieData.get(clickCount).getStartAngel(), pieData.get(clickCount).getSectorAngel(), true, paint);
+                canvas.drawText("第" + clickCount + "个" + pieData.get(clickCount).getPercent(), mCentre.x, mCentre.y, textPaint);
+            } else if (lastCount == clickCount) {
+                canvas.drawArc(minWithDrawArc, pieData.get(clickCount).getStartAngel(), pieData.get(clickCount).getSectorAngel(), true, paint);
+            }
+        }
+
+        for (int i = 0; i < colors.size(); i++) {
+            if (clickCount>=0) {
+                if (clickCount==i)
+                    paint.setColor(colors.get(i));
+                else
+                    paint.setColor(grayColors.get(i));
+            }else {
+                paint.setColor(colors.get(i));
+            }
+            canvas.drawRect(rects.get(i), paint);
+        }
+        canvas.restore();
+    }
+
+    private int animCount = 0;
+
+    /**
+     * 开始动画
+     *
+     * @param canvas
+     */
+    private void startAnim(Canvas canvas) {
+
+        int curcentCount = 0;
+        if (animCount <= 360) {
+            for (int i = 0; i < pieData.size(); i++) {
+                if (i == 0) {
+                    if (animCount < pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel())
+                        curcentCount = 0;
+                } else {
+                    if (animCount <= pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() && animCount > pieData.get(i).getStartAngel())
+                        curcentCount = i;
+                }
+            }
+        }
+        for (int i = 0; i < curcentCount + 1; i++) {
+            if (i == curcentCount) {
+                paint.setColor(colors.get(i));
+                canvas.drawArc(maxArc, pieData.get(i).getStartAngel(), animCount - pieData.get(curcentCount).getStartAngel(), true, paint);
+//                if (animCount > pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() / 2) {
+//                    txtPoint = MathHelper.getInstanse().getPoint(pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() / 2, 0.5f * radius, mCentre);
+//                    canvas.drawText(pieData.get(i).getPercent(), txtPoint.x, txtPoint.y, textPaint);
+//                }
+
+            } else {
+                paint.setColor(colors.get(i));
+                canvas.drawArc(maxArc, pieData.get(i).getStartAngel(), pieData.get(i).getSectorAngel(), true, paint);
+//                txtPoint = MathHelper.getInstanse().getPoint(pieData.get(i).getStartAngel() + pieData.get(i).getSectorAngel() / 2, 0.5f * radius, mCentre);
+//                canvas.drawText(pieData.get(i).getPercent(), txtPoint.x, txtPoint.y, textPaint);
+            }
+        }
+        animCount += 5;
+    }
+
+    private boolean isMove = false;
+    private Point lastDown = new Point();
+    private Point moveDown = new Point();
+    private float moveAngel = 0;
+    private boolean scroll = true;
+    private boolean doublePoint = false;
+    private boolean isClick=false;
+    private int velocity;
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        mVelocity.addMovement(event);
+        mVelocity.computeCurrentVelocity(1000);
+//        if (Math.abs(countAngel)<Math.abs(clickAngel)&&clickAngel!=0){
+//            return;
+//        }
+        if (event.getPointerCount() >= 2) {
+            doublePoint = true;
+            return true;
+
+        }
+        switch (event.getAction()) {
+
+            case MotionEvent.ACTION_DOWN:
+                isMove = false;
+                doublePoint = false;
+                isClick=false;
+                countAngel = 0;
+                clickAngel = 0;
+                lastDown.x = (int) event.getX();
+                lastDown.y = (int) event.getY();
+                moveDown.x = (int) event.getX();
+                moveDown.y = (int) event.getY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (doublePoint)
+                    break;
+                moveDown.x = (int) event.getX();
+                moveDown.y = (int) event.getY();
+
+                if (bottomRect.contains(event.getX(),event.getY())) {
+                    float x = moveDown.x - lastDown.x;
+                    if (x>0)
+                        scroll=false;
+                    else
+                        scroll=true;
+                    if (Math.abs(x)>10) {
+                        for (int i = 0; i < rects.size(); i++) {
+                            RectF rect = rects.get(i);
+                            rect.left += x;
+                            rect.right += x;
+                            if (rect.left > width) {
+                                rect.left -= width;
+                                rect.right -= width;
+                            } else if (rect.right < 0) {
+                                rect.left += width;
+                                rect.right += width;
+                            }
+                            float angel = pieData.get(i).getStartAngel();
+                            angel += x / (float) width * 360f;
+                            if (angel >= 360)
+                                angel -= 360;
+                            if (angel < 0)
+                                angel += 360;
+                            pieData.get(i).setStartAngel(angel);
+                        }
+                        isMove = true;
+                        lastDown.x = moveDown.x;
+                        lastDown.y = moveDown.y;
+                        postInvalidate();
+                    }
+                }
+                if (MathHelper.getInstanse().isAngelArc(0.8f * radius, 4 * index, event.getX()
+                        , event.getY(), mCentre, 0, 360)) {
+                    if (Math.sqrt(Math.pow(moveDown.x - lastDown.x, 2) + Math.pow(moveDown.y - lastDown.y, 2)) > 5) {
+                        float fromAngel = MathHelper.getInstanse().getAngel(lastDown.x, lastDown.y, mCentre);
+                        float toAngel = MathHelper.getInstanse().getAngel(moveDown.x, moveDown.y, mCentre);
+                        Log.e("fangxiang",(fromAngel-toAngel)+"");
+                        if (toAngel-fromAngel>0)
+                            scroll=false;
+                        else
+                            scroll=true;
+                        for (int i = 0; i < pieData.size(); i++) {
+                            float angel = pieData.get(i).getStartAngel();
+                            angel += (toAngel - fromAngel);
+                            float x=(toAngel-fromAngel)/360f*width;
+                            rects.get(i).left+=x;
+                            rects.get(i).right+=x;
+                            if (rects.get(i).left>width){
+                                rects.get(i).left-=width;
+                                rects.get(i).right-=width;
+                            }else if (rects.get(i).right<0){
+                                rects.get(i).left+=width;
+                                rects.get(i).right+=width;
+                            }
+                            if (angel > 360)
+                                angel -= 360;
+                            if (angel < 0)
+                                angel += 360;
+                            pieData.get(i).setStartAngel(angel);
+                            Log.e("startangel", i + "==" + pieData.get(i).getStartAngel());
+                        }
+
+//                    pieChartView.postInvalidate();
+                        isMove = true;
+                        postInvalidate();
+                    }
+
+                    lastDown.x = moveDown.x;
+                    lastDown.y = moveDown.y;
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+
+                if (doublePoint)
+                    break;
+                if (isMove) {
+                    Log.e("velocity",mVelocity.getYVelocity()+"");
+                    velocity= (int) Math.sqrt(mVelocity.getYVelocity()*mVelocity.getYVelocity()
+                    +mVelocity.getXVelocity()*mVelocity.getXVelocity());
+                    if (mVelocity.getYVelocity()*mVelocity.getXVelocity()>0)
+                        scroll=true;
+                    else
+                        scroll=false;
+                    return true;
+                }
+                velocity=0;
+                if (MathHelper.getInstanse().isInPie(6 * index, event.getX(), event.getY(), mCentre)) {
+                    Log.e("moveangel", moveAngel + "");
+                    lastCount = clickCount;
+                    for (int i = 0; i < pieData.size(); i++) {
+                        PieChartModel model = pieData.get(i);
+
+                        if (MathHelper.getInstanse().isAngelArc(0.7f * radius, 4 * index, event.getX()
+                                , event.getY(), mCentre, model.getStartAngel(), model.getSectorAngel())) {
+                            clickCount = i;
+                            isClick=true;
+                            break;
+                        }
+                    }
+
+                }
+                if (!isClick) {
+                    for (int i = 0; i < rects.size(); i++) {
+                        RectF rectF=new RectF(rects.get(i).left-100,rects.get(i).top-100,rects.get(i).right+100,rects.get(i).bottom+100);
+                        if (rectF.contains(event.getX(), event.getY())) {
+                            lastCount = clickCount;
+                            clickCount = i;
+                            isClick = true;
+                            break;
+                        }
+                    }
+                }
+                if (clickCount != -1&&isClick) {
+                    clickAngel = pieData.get(clickCount).getStartAngel() + pieData.get(clickCount).getSectorAngel() / 2;
+                    if (clickAngel >= 360)
+                        clickAngel -= 360;
+                    outCount = 0f;
+                    if (clickAngel >= 270 && clickAngel <= 360) {
+                        clickAngel = 360 - clickAngel + 90;
+                    } else if (clickAngel >= 90 && clickAngel <= 270) {
+                        clickAngel = 90 - clickAngel;
+                    } else if (clickAngel >= 0 && clickAngel <= 90) {
+                        clickAngel = 90 - clickAngel;
+                    }
+                    postInvalidate();
+                }
+        }
+        return true;
+    }
+
+    @Override
+    public void computeScroll() {
+        super.computeScroll();
+//        if (velocity<=100)
+//            return;
+//        velocity*=0.9;
+//        for (int i = 0; i < rects.size(); i++) {
+//            RectF rect = rects.get(i);
+//            if (scroll) {
+//                rect.left -= velocity / 100;
+//                rect.right -= velocity / 100;
+//            }else {
+//                rect.left += velocity / 100;
+//                rect.right += velocity / 100;
+//            }
+//            if (rect.left > width) {
+//                rect.left -= width;
+//                rect.right -= width;
+//            } else if (rect.right < 0) {
+//                rect.left += width;
+//                rect.right += width;
+//            }
+//            float angel = pieData.get(i).getStartAngel();
+//            if (scroll)
+//                angel -= velocity/100 / (float) width * 360f;
+//            else
+//                angel += velocity/100 / (float) width * 360f;
+//            if (angel >= 360)
+//                angel -= 360;
+//            if (angel < 0)
+//                angel += 360;
+//            pieData.get(i).setStartAngel(angel);
+//        }
+//        postInvalidate();
+    }
+
+    private ValueAnimator valueAnimator = new ValueAnimator();
+
+    private boolean startAnim = false;
+    private float lastAngel;
+
+    private void rotateAnim() {
+        valueAnimator.setIntValues(0, (int) clickAngel);
+        valueAnimator.setDuration(500);
+        startAnim = true;
+        valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                lastAngel = countAngel;
+                countAngel = (Integer) animation.getAnimatedValue();
+            }
+        });
+        if (!valueAnimator.isStarted())
+            valueAnimator.start();
+    }
+}

@@ -1,0 +1,64 @@
+package demo.cn.chartdemo.view;
+
+import android.content.Context;
+import android.util.AttributeSet;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+
+import demo.cn.chartdemo.R;
+
+/**
+ * Author  wangchenchen
+ * CreateDate 2016/1/22.
+ * Email wcc@jusfoun.com
+ * Description
+ */
+public class ToastLayout extends LinearLayout {
+    private Context context;
+    private ImageView left,right;
+    private LinearLayout layout;
+    public ToastLayout(Context context) {
+        super(context);
+        initViews(context);
+    }
+
+    public ToastLayout(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initViews(context);
+    }
+
+    public ToastLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        initViews(context);
+    }
+
+    private void initViews(Context context){
+        this.context=context;
+        View view= LayoutInflater.from(context).inflate(R.layout.layout_toast,this);
+        left= (ImageView) view.findViewById(R.id.left);
+        right= (ImageView) view.findViewById(R.id.right);
+        layout= (LinearLayout) view.findViewById(R.id.layout);
+    }
+
+    public void setLeftListener(OnClickListener listener){
+        left.setOnClickListener(listener);
+    }
+
+    public void setRightListener(OnClickListener listener){
+        right.setOnClickListener(listener);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()){
+            case MotionEvent.ACTION_MOVE:
+                layout.setX(event.getX());
+                layout.setY(event.getY());
+                return true;
+        }
+        return super.onTouchEvent(event);
+    }
+}
