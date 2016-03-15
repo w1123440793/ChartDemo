@@ -1,10 +1,7 @@
 package demo.cn.chartdemo.model;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/1/20.
- * Email wcc@jusfoun.com
- * Description
+ * Description 饼图model
  */
 public class PieChartModel extends BaseModel {
 

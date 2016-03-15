@@ -1,9 +1,6 @@
 package demo.cn.chartdemo.Utils;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/1/27.
- * Email wcc@jusfoun.com
  * Description 防止间隔较短时间内用户多次点击
  */
 public class ClickFilter

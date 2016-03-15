@@ -9,9 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/2/26.
- * Email wcc@jusfoun.com
  * Description 自定义滚动组件
  */
 public class CHScrollView extends HorizontalScrollView {

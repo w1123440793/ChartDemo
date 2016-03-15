@@ -1,9 +1,6 @@
 package demo.cn.chartdemo.model;
 
 /**
- * Created by Albert on 2016/2/2.
- * Mail : lbh@jusfoun.com
- * TODO :
  * Description:记录选中模块
  */
 public class SelectedModel {

@@ -1,9 +1,6 @@
 package demo.cn.chartdemo.Utils;
 
 /**
- * Created by Albert on 2016/2/1.
- * Mail : lbh@jusfoun.com
- * TODO :
  * Description:柱状图util变量
  */
 public class ColumnUtil {

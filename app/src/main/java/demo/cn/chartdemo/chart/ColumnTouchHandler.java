@@ -14,9 +14,6 @@ import demo.cn.chartdemo.model.SubcolumnModel;
 import demo.cn.chartdemo.view.ColumnChartView;
 
 /**
- * Created by Albert on 2016/2/2.
- * Mail : lbh@jusfoun.com
- * TODO :
  * Description: 柱状图点击事件处理handler
  */
 public class ColumnTouchHandler {

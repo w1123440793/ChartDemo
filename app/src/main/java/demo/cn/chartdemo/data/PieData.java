@@ -12,9 +12,6 @@ import java.util.Random;
 import demo.cn.chartdemo.model.PieChartModel;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/2/23.
- * Email wcc@jusfoun.com
  * Description 饼图绘制相关属性
  */
 public class PieData {

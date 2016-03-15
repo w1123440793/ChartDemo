@@ -21,9 +21,6 @@ import java.util.Map;
 import demo.cn.chartdemo.R;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/2/26.
- * Email wcc@jusfoun.com
  * Description 双向滑动表格
  */
 public class FormView extends LinearLayout {
@@ -34,8 +31,8 @@ public class FormView extends LinearLayout {
     public HorizontalScrollView mTouchView;
     //装入所有的HScrollView
     protected List<CHScrollView> mHScrollViews =new ArrayList<CHScrollView>();
-    private String[] cols = new String[] { "title", "data_1", "data_2", "data_3", "data_4", "data_5",
-            "data_6","data_7","data_8", "data_9"};
+    private String[] cols = new String[] { "标题", "数据1", "数据2", "数据3", "数据4", "数据5",
+            "数据6","数据7","数据8", "数据9"};
 
     private ScrollAdapter mAdapter;
     public FormView(Context context) {
@@ -69,9 +66,9 @@ public class FormView extends LinearLayout {
         mListView = (ListView) findViewById(R.id.hlistview_scroll_list);
         for(int i = 0; i < 20; i++) {
             data = new HashMap<String, String>();
-            data.put("title", "C区_" + i);
+            data.put("标题", "行" + i);
             for (int j = 1; j <= cols.length; j++) {
-                data.put("data_" + j, "Date_" + j + "_" + i );
+                data.put("数据" + j, "数据" + j + "_" + i );
             }
 
             datas.add(data);

@@ -13,7 +13,6 @@
         android:layout_height="fill_parent"
         android:layout_weight="2"
         android:gravity="center"
-        android:text="C区" 
         android:textColor="#000"/>
 
     <demo.cn.chartdemo.view.CHScrollView

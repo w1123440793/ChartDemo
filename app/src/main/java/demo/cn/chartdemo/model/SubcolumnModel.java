@@ -3,9 +3,6 @@ package demo.cn.chartdemo.model;
 import android.graphics.RectF;
 
 /**
- * Created by Albert on 2016/2/1.
- * Mail : lbh@jusfoun.com
- * TODO :
  * Description:子柱状图model
  */
 public class SubcolumnModel extends BaseModel {

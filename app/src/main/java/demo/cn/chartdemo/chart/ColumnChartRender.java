@@ -8,9 +8,6 @@ import demo.cn.chartdemo.model.ColumnDataModel;
 import demo.cn.chartdemo.model.SubcolumnModel;
 
 /**
- * Created by Albert on 2016/2/2.
- * Mail : lbh@jusfoun.com
- * TODO :
  * Description: 柱状图渲染器
  */
 public class ColumnChartRender {

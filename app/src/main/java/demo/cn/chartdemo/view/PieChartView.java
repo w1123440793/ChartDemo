@@ -22,9 +22,6 @@ import demo.cn.chartdemo.data.PieData;
 import demo.cn.chartdemo.model.PieChartModel;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/1/20.
- * Email wcc@jusfoun.com
  * Description 饼图
  */
 public class PieChartView extends View {

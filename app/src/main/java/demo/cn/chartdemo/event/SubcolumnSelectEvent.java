@@ -3,9 +3,6 @@ package demo.cn.chartdemo.event;
 import demo.cn.chartdemo.model.SubcolumnModel;
 
 /**
- * Created by Albert on 2016/2/3.
- * Mail : lbh@jusfoun.com
- * TODO :
  * Description:子柱状图选中、取消选中发送此event
  */
 public class SubcolumnSelectEvent implements IEvent{

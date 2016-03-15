@@ -8,9 +8,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/1/14.
- * Email wcc@jusfoun.com
  * Description 计算辅助类
  */
 public class MathHelper {

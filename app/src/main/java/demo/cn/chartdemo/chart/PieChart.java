@@ -19,10 +19,7 @@ import demo.cn.chartdemo.model.PieChartModel;
 import demo.cn.chartdemo.view.PieChartSurfaceView;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/1/14.
- * Email wcc@jusfoun.com
- * Description
+ * Description 饼图属性
  */
 public class PieChart {
     private PieChartSurfaceView pieChartSurfaceView;

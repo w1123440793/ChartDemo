@@ -10,9 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/1/22.
- * Email wcc@jusfoun.com
  * Description
  */
 public class PieUtil extends View {

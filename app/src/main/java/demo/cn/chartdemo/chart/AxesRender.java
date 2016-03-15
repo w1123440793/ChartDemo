@@ -10,9 +10,6 @@ import demo.cn.chartdemo.model.ColumnDataModel;
 import demo.cn.chartdemo.model.ColumnModel;
 
 /**
- * Created by Albert on 2016/2/3.
- * Mail : lbh@jusfoun.com
- * TODO :稍后根据具体的model进行Y轴刻度计算和绘制
  * Description: 坐标轴渲染器
  */
 public class AxesRender {

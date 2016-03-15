@@ -17,9 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/2/25.
- * Email wcc@jusfoun.com
  * Description 表格
  */
 public class FormChartView extends View {

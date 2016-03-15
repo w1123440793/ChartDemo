@@ -19,9 +19,6 @@ import demo.cn.chartdemo.chart.PieChart;
 import demo.cn.chartdemo.model.PieChartModel;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/1/14.
- * Email wcc@jusfoun.com
  * Description
  */
 public class PieChartSurfaceView extends SurfaceView implements SurfaceHolder.Callback {

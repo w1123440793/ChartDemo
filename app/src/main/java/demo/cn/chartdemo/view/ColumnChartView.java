@@ -28,9 +28,6 @@ import demo.cn.chartdemo.model.ColumnModel;
 import demo.cn.chartdemo.model.SubcolumnModel;
 
 /**
- * Created by Albert on 2016/2/1.
- * Mail : lbh@jusfoun.com
- * TODO :
  * Description:柱状图view
  */
 public class ColumnChartView extends View{

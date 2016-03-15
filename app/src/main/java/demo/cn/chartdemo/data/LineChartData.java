@@ -10,9 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/2/16.
- * Email wcc@jusfoun.com
  * Description 折线图绘制相关属性
  */
 public class LineChartData {

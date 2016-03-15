@@ -20,9 +20,6 @@ import demo.cn.chartdemo.Utils.MathHelper;
 import demo.cn.chartdemo.data.LineChartData;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/1/27.
- * Email wcc@jusfoun.com
  * Description 折线图
  */
 public class LineChartView extends View {

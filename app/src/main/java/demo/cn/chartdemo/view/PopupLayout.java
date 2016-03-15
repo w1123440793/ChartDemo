@@ -13,9 +13,6 @@ import android.widget.TextView;
 import demo.cn.chartdemo.R;
 
 /**
- * Author  wangchenchen
- * CreateDate 2016/1/22.
- * Email wcc@jusfoun.com
  * Description 弹出操作框
  */
 public class PopupLayout extends LinearLayout {

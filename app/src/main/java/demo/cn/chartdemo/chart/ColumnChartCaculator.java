@@ -8,9 +8,6 @@ import demo.cn.chartdemo.model.ColumnDataModel;
 import demo.cn.chartdemo.model.SubcolumnModel;
 
 /**
- * Created by Albert on 2016/2/2.
- * Mail : lbh@jusfoun.com
- * TODO :
  * Description:工具类，计算每列的宽度及每个子柱状图的矩形坐标
  */
 public class ColumnChartCaculator {
